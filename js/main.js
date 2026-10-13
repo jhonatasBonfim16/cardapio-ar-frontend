@@ -20,7 +20,7 @@ async function carregarCardapio() {
     try {
         const MEU_IP_LOCAL = "192.168.100.77"; 
         // 1. COLE AQUI O LINK REAL QUE O RENDER TE DEU NO PASSO ANTERIOR:
-        const API_PRODUCAO = "https://onrender.com"; 
+        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com"; 
 
         // Se o site rodar no seu PC, busca no localhost. Se rodar na internet, busca no Render.
         const apiHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')

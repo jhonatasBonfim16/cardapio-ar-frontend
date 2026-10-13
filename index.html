@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/style.css">
+    <title>Cardápio Digital AR</title>
+    
+    <!-- Script do motor de RA do Google -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    
+</head>
+
+<body>
+
+    <!-- BARRA TOPO FIXA COMPLETA (ESTILO INSTACART/IFOOD) -->
+    <div class="topo-fixo">
+        <header>
+            <div>
+                <h1>Restaurante<span>.AR</span></h1>
+                <p>Cardápio Interativo</p>
+            </div>
+            
+            <button class="carrinho-topo" aria-label="Sacola de pedidos">
+                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icone-sacola">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span id="contador-carrinho">0</span>
+            </button>
+        </header>
+
+        <!-- MENU DE CATEGORIAS HORIZONTAL -->
+        <div class="menu-categorias">
+            <div class="categoria-item ativo">🔥 Destaques</div>
+            <div class="categoria-item">🍔 Burgers</div>
+            <div class="categoria-item">🍕 Pizzas</div>
+            <div class="categoria-item">🍹 Bebidas</div>
+            <div class="categoria-item">🍰 Sobremesas</div>
+        </div>
+    </div>
+
+    <!-- CONTAINER DA LISTA DINÂMICA -->
+    <main>
+        <div id="lista-cardapio"><!-- Os pratos vão aparecer aqui dinamicamente --></div>
+    </main>
+
+    <!-- Vinculação do seu Script JavaScript Externo -->
+    <script src="./js/main.js"></script>
+</body>
+
+</html>

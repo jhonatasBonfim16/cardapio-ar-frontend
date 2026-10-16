@@ -149,8 +149,13 @@ function alternarCategoria(elemento, categoria) {
 
 async function carregarCardapio() {
     try {
+<<<<<<< HEAD
         const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
         const apiHost = API_PRODUCAO;
+=======
+        // 1. COLE AQUI O LINK REAL QUE O RENDER TE DEU NO PASSO ANTERIOR:
+        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com"; 
+>>>>>>> 684c3bd5d169ecd75dabf3de9480ec73c14b2da7
 
         // Injeta dinamicamente a query string se houver categoria ativa
         const urlFinal = categoriaAtual ? `${apiHost}/api/cardapio?categoria=${categoriaAtual}` : `${apiHost}/api/cardapio`;

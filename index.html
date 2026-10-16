@@ -5,24 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/carrinho.css">
     <title>Cardápio Digital AR</title>
     
-    <!-- Script do motor de RA do Google -->
+    <!-- Script do motor de RA do Google (Corrigido) -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-    
 </head>
 
 <body>
 
-    <!-- BARRA TOPO FIXA COMPLETA (ESTILO INSTACART/IFOOD) -->
+    <!-- BARRA TOPO FIXA COMPLETA -->
     <div class="topo-fixo">
         <header>
             <div>
-                <h1>Restaurante<span>.AR</span></h1>
-                <p>Cardápio Interativo</p>
+                <h1>Restaurante<span> do João</span></h1>
+                <p>Cardápio AR</p>
             </div>
             
-            <button class="carrinho-topo" aria-label="Sacola de pedidos">
+            <!-- Botão modificado para abrir o Modal do carrinho ao clicar -->
+            <button class="carrinho-topo" onclick="abrirCarrinho()" aria-label="Sacola de pedidos">
                 <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icone-sacola">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                 </svg>
@@ -30,13 +31,13 @@
             </button>
         </header>
 
-        <!-- MENU DE CATEGORIAS HORIZONTAL -->
+        <!-- MENU DE CATEGORIAS HORIZONTAL (Com a função onclick injetada de forma reativa) -->
         <div class="menu-categorias">
-            <div class="categoria-item ativo">🔥 Destaques</div>
-            <div class="categoria-item">🍔 Burgers</div>
-            <div class="categoria-item">🍕 Pizzas</div>
-            <div class="categoria-item">🍹 Bebidas</div>
-            <div class="categoria-item">🍰 Sobremesas</div>
+            <div class="categoria-item ativo" onclick="alternarCategoria(this, '')">🔥 Tudo</div>
+            <div class="categoria-item" onclick="alternarCategoria(this, 'Hamburgues')">🍔 Hamburgues</div>
+            <div class="categoria-item" onclick="alternarCategoria(this, 'Pizzas')">🍕 Pizzas</div>
+            <div class="categoria-item" onclick="alternarCategoria(this, 'Bebidas')">🍹 Bebidas</div>
+            <div class="categoria-item" onclick="alternarCategoria(this, 'Sobremesas')">🍰 Sobremesas</div>
         </div>
     </div>
 
@@ -45,7 +46,46 @@
         <div id="lista-cardapio"><!-- Os pratos vão aparecer aqui dinamicamente --></div>
     </main>
 
-    <!-- Vinculação do seu Script JavaScript Externo -->
+    <!-- INTERFACE MODAL DO CARRINHO DE COMPRAS (ESTILO DELIVERY PREMIUM) -->
+    <div id="modal-carrinho" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Sua Sacola</h2>
+                <button class="btn-fechar" onclick="fecharCarrinho()">✕</button>
+            </div>
+            
+            <!-- Onde a lista de itens adicionados vai renderizar via JS -->
+            <div id="itens-carrinho" class="modal-corpo"></div>
+            
+            <div class="modal-footer">
+                <div class="total-container">
+                    <span>Total do Pedido:</span>
+                    <strong id="preco-total-carrinho">R$ 0,00</strong>
+                </div>
+                
+                <!-- Seleção do Local de Consumo -->
+                <div class="opcoes-entrega">
+                    <label>
+                        <input type="radio" name="tipo-pedido" value="mesa" checked onclick="alternarCamposPedido('mesa')"> 
+                        📍 Na Mesa
+                    </label>
+                    <label>
+                        <input type="radio" name="tipo-pedido" value="delivery" onclick="alternarCamposPedido('delivery')"> 
+                        🛵 Casa (WhatsApp)
+                    </label>
+                </div>
+
+                <!-- Input Dinâmico -->
+                <div id="campo-dinamico-pedido" class="campo-input-container">
+                    <input type="number" id="input-identificador" placeholder="Digite o número da sua mesa">
+                </div>
+
+                <button class="btn-finalizar" onclick="enviarPedidoFinal()">Finalizar Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vinculação do Script JavaScript Externo -->
     <script src="./js/main.js"></script>
 </body>
 

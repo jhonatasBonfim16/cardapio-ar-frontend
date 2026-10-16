@@ -96,15 +96,33 @@ function alternarCamposPedido(tipo) {
 }
 
 // Envio Inteligente do Pedido Final
+// FUNÇÃO DE HIGIENIZAÇÃO (Anti-XSS e remoção de código malicioso)
+function higienizarEntrada(texto) {
+    if (!texto) return '';
+    
+    return texto
+        .replace(/<[^>]*>/g, '') // Remove qualquer tag HTML/Script completamente (ex: <script> virará vazio)
+        .replace(/&/g, "&amp;")  // Escapa caracteres especiais de HTML
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .trim();                 // Remove espaços extras nas pontas
+}
+
+// Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 function enviarPedidoFinal() {
     if (carrinho.length === 0) {
         alert("Sua sacola está vazia!");
         return;
     }
 
-    const inputVal = document.getElementById('input-identificador').value.trim();
+    // 1. CAPTURA E HIGIENIZAÇÃO CRÍTICA DO INPUT DO USUÁRIO
+    const inputBruto = document.getElementById('input-identificador').value;
+    const inputVal = higienizarEntrada(inputBruto);
+
     if (!inputVal) {
-        alert("Por favor, preencha o campo de identificação/endereço obrigatório.");
+        alert("Por favor, preencha o campo de identificação/endereço obrigatório com caracteres válidos.");
         return;
     }
 
@@ -124,10 +142,10 @@ function enviarPedidoFinal() {
         alert("🚀 Pedido enviado com sucesso para a cozinha da nossa mesa!");
     } else {
         textoMensagem += `🛵 *Entrega no Endereço:* ${inputVal}`;
-        // CORREÇÃO CRÍTICA AQUI: Corrigida a montagem do link da API oficial do WhatsApp
-        const numeroWhats = "5527998399687";
+        
+        const numeroWhats = "5527998399687";  // alterar depois
+        // O encodeURIComponent continua aqui para garantir que a URL do WhatsApp formate os espaços corretamente
         window.open(`https://wa.me/${numeroWhats}?text=${encodeURIComponent(textoMensagem)}`, '_blank');
-
     }
 
     // Limpa o carrinho após finalizar
@@ -136,6 +154,7 @@ function enviarPedidoFinal() {
     fecharCarrinho();
 }
 
+
 // LÓGICA DE FILTRAGEM REATIVA POR CATEGORIAS
 function alternarCategoria(elemento, categoria) {
     // Altera a classe visual ativa no menu horizontal
@@ -143,19 +162,13 @@ function alternarCategoria(elemento, categoria) {
     elemento.classList.add('ativo');
 
     categoriaAtual = categoria;
-    console.log(categoria)
     carregarCardapio(); // Re-chama o fetch aplicando a rota filtrada no Postgres
 }
 
 async function carregarCardapio() {
     try {
-<<<<<<< HEAD
-        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
+        const API_PRODUCAO =  "https://cardapio-ar-backend.onrender.com";
         const apiHost = API_PRODUCAO;
-=======
-        // 1. COLE AQUI O LINK REAL QUE O RENDER TE DEU NO PASSO ANTERIOR:
-        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com"; 
->>>>>>> 684c3bd5d169ecd75dabf3de9480ec73c14b2da7
 
         // Injeta dinamicamente a query string se houver categoria ativa
         const urlFinal = categoriaAtual ? `${apiHost}/api/cardapio?categoria=${categoriaAtual}` : `${apiHost}/api/cardapio`;

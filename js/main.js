@@ -193,7 +193,7 @@ function alternarCategoria(elemento, categoria) {
 
 async function carregarCardapio() {
     try {
-        const API_PRODUCAO = 'http://192.168.100.77:3000' //"https://cardapio-ar-backend.onrender.com";
+        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
         const apiHost = API_PRODUCAO;
 
         // Injeta dinamicamente a query string se houver categoria ativa

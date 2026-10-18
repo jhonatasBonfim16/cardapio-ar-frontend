@@ -202,31 +202,32 @@ async function enviarPedidoFinal() {
         }
 
         // =========================================================================
-        // [CORRIGIDO]: O WhatsApp agora abre para TODAS as formas de pagamento!
+        // [CORRIGIDO]: O fluxo agora divide o comportamento perfeitamente!
         // =========================================================================
-        alert("Pedido recebido com sucesso! Encaminhando o resumo para o WhatsApp...");
 
-        // Se o método escolhido foi PIX, ALÉM de abrir o Zap, exibe o QR Code na tela
         if (formaPagamento === 'pix' && response.pixCopiaCola) {
-            // Injeta os dados recebidos da sua API no modal de pagamento
+            // 1. Se for PIX: Apenas abre o Modal com o QR Code na tela.
+            // O WhatsApp NÃO abre agora. Ele fica em silêncio aguardando o pagamento.
+            fecharCarrinho();
             document.getElementById('qrcode-pix').src = response.pixQrCodeBase64;
             document.getElementById('input-copia-cola').value = response.pixCopiaCola;
-
-            // Abre o modal de pagamento na tela para o cliente ver o QR Code
             document.getElementById('modal-pagamento').classList.add('ativo');
 
-            // Inicia a checagem automática (Polling)
+            // Inicia o Polling. Quando detectar o pagamento, a função 'verificarStatusPagamento' abrirá o Zap!
             if (typeof verificarStatusPagamento === "function") {
                 verificarStatusPagamento(response.pedidoId);
             }
         } else {
-            // Se for dinheiro ou cartão, apenas fecha a sacola (já que o Zap abriu acima)
+            // 2. Se for CARTÃO ou DINHEIRO: Abre o WhatsApp IMEDIATAMENTE enviando para a cozinha.
+            alert("Pedido recebido com sucesso! Encaminhando o resumo para o WhatsApp da cozinha...");
+            window.open(`https://wa.me/${dados.numeroWhats}?text=${encodeURIComponent(dados.textoMensagem)}`, '_blank');
             fecharCarrinho();
         }
 
         // Limpa a sacola após o sucesso total do envio
         carrinho = [];
         atualizarBadgeCarrinho();
+
 
 
     } catch (err) {
@@ -309,16 +310,15 @@ async function carregarCardapio() {
 
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card';
-
-                // CORREÇÃO AQUI: Ajustado o xmlns do SVG para o link correto da W3C
                 cardDiv.innerHTML = `
                     <div class="viewport-ar">
                         <model-viewer 
                             src="${urlModelo}" 
-                            ios-src="modelo3d_ios#allowsContentScaling=0" 
+                            ios-src="${modelo3d_ios}#allowsContentScaling=0" 
                             poster="${urlFoto}"
                             ar                         
-                            ar-scale="fixed" ar-modes="webxr scene-viewer quick-look" 
+                            ar-scale="fixed"
+                            ar-modes="webxr scene-viewer quick-look" 
                             camera-controls 
                             touch-action="pan-y"
                             shadow-intensity="1"
@@ -326,7 +326,7 @@ async function carregarCardapio() {
                             alt="Modelo 3D de ${nome}">
                             
                             <button slot="ar-button" class="btn-ar">
-                                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <svg xmlns="http://w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 Ver em 3D

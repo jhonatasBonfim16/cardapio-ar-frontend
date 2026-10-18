@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="./css/carrinho.css">
     <title>Cardápio Digital AR</title>
     
-    <!-- Script do motor de RA do Google (Corrigido) -->
+    <!-- Script do motor de RA do Google -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 </head>
 
@@ -22,16 +22,26 @@
                 <p>Cardápio AR</p>
             </div>
             
-            <!-- Botão modificado para abrir o Modal do carrinho ao clicar -->
-            <button class="carrinho-topo" onclick="abrirCarrinho()" aria-label="Sacola de pedidos">
-                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icone-sacola">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-                <span id="contador-carrinho">0</span>
-            </button>
+            <!-- Grupo de botões do Topo -->
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- Botão de Perfil/Login Adicionado -->
+                <button class="carrinho-topo" onclick="abrirAuth()" aria-label="Minha Conta">
+                    <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icone-sacola" style="width: 24px; height: 24px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                    </svg>
+                </button>
+
+                <!-- Botão do Carrinho -->
+                <button class="carrinho-topo" onclick="abrirCarrinho()" aria-label="Sacola de pedidos">
+                    <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icone-sacola">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
+                    <span id="contador-carrinho">0</span>
+                </button>
+            </div>
         </header>
 
-        <!-- MENU DE CATEGORIAS HORIZONTAL (Com a função onclick injetada de forma reativa) -->
+        <!-- MENU DE CATEGORIAS HORIZONTAL -->
         <div class="menu-categorias">
             <div class="categoria-item ativo" onclick="alternarCategoria(this, '')">🔥 Tudo</div>
             <div class="categoria-item" onclick="alternarCategoria(this, 'Hamburgues')">🍔 Hamburgues</div>
@@ -46,7 +56,7 @@
         <div id="lista-cardapio"><!-- Os pratos vão aparecer aqui dinamicamente --></div>
     </main>
 
-    <!-- INTERFACE MODAL DO CARRINHO DE COMPRAS (ESTILO DELIVERY PREMIUM) -->
+    <!-- INTERFACE MODAL DO CARRINHO DE COMPRAS -->
     <div id="modal-carrinho" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -54,7 +64,6 @@
                 <button class="btn-fechar" onclick="fecharCarrinho()">✕</button>
             </div>
             
-            <!-- Onde a lista de itens adicionados vai renderizar via JS -->
             <div id="itens-carrinho" class="modal-corpo"></div>
             
             <div class="modal-footer">
@@ -75,9 +84,28 @@
                     </label>
                 </div>
 
-                <!-- Input Dinâmico -->
+                <!-- Input Dinâmico (Mesa ou Endereço) -->
                 <div id="campo-dinamico-pedido" class="campo-input-container">
                     <input type="number" id="input-identificador" placeholder="Digite o número da sua mesa">
+                </div>
+
+                <!-- NOVA SEÇÃO: Métodos de Pagamento -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; color: #6d4c41; font-weight: bold; display: block; margin-bottom: 8px;">Forma de Pagamento:</label>
+                    <div class="opcoes-entrega" style="gap: 5px;">
+                        <label>
+                            <input type="radio" name="metodo-pagamento" value="pix" checked> 
+                            ⚡ Pix
+                        </label>
+                        <label>
+                            <input type="radio" name="metodo-pagamento" value="cartao"> 
+                            💳 Cartão
+                        </label>
+                        <label>
+                            <input type="radio" name="metodo-pagamento" value="dinheiro"> 
+                            💵 Dinheiro
+                        </label>
+                    </div>
                 </div>
 
                 <button class="btn-finalizar" onclick="enviarPedidoFinal()">Finalizar Pedido</button>
@@ -85,8 +113,70 @@
         </div>
     </div>
 
+
+    <!-- INTERFACE MODAL DE AUTENTICAÇÃO (LOGIN / CADASTRO) -->
+    <div id="modal-auth" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="auth-titulo">Criar uma Conta</h2>
+                <button class="btn-fechar" onclick="fecharAuth()">✕</button>
+            </div>
+            
+            <div class="modal-corpo" style="max-height: none;">
+                <form id="form-auth" class="campo-input-container" onsubmit="enviarAutenticacao(event)">
+                    
+                    <div id="wrapper-nome">
+                        <label style="font-size: 13px; color: #6d4c41; font-weight: bold; display: block; margin-bottom: 5px;">Seu Nome:</label>
+                        <input type="text" id="auth-nome" placeholder="Digite seu nome completo">
+                    </div>
+
+                    <label style="font-size: 13px; color: #6d4c41; font-weight: bold; display: block; margin-bottom: 5px;">E-mail:</label>
+                    <input type="email" id="auth-email" placeholder="seuemail@exemplo.com" required>
+
+                    <label style="font-size: 13px; color: #6d4c41; font-weight: bold; display: block; margin-bottom: 5px;">Senha:</label>
+                    <input type="password" id="auth-senha" placeholder="Digite sua senha" required>
+
+                    <button type="submit" class="btn-finalizar" id="btn-auth-enviar" style="margin-top: 10px;">Criar Conta</button>
+                </form>
+            </div>
+            
+            <div class="modal-footer" style="text-align: center; padding-top: 10px;">
+                <a href="javascript:void(0)" id="auth-alternar" onclick="alternarModoAuth()" style="color: #ff5722; font-weight: bold; font-size: 14px; text-decoration: none;">
+                    Já tem conta? Faça login aqui
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal para exibir o Pix após finalizar o pedido -->
+<div id="modal-pagamento" class="modal-overlay">
+    <div class="modal-container" style="text-align: center;">
+        <div class="modal-header">
+            <h2>Pagamento via PIX</h2>
+            <button class="btn-fechar" onclick="fecharModalPagamento()">✕</button>
+        </div>
+        <div class="modal-corpo" style="max-height: none; padding: 20px 0;">
+            <p style="color: #6d4c41; margin-bottom: 15px; font-weight: 500;">Escaneie o QR Code abaixo ou copie o código para pagar:</p>
+            
+            <!-- Imagem do QR Code gerado pela API -->
+            <img id="qrcode-pix" src="" alt="QR Code Pix" style="width: 200px; height: 200px; margin: 0 auto 20px; display: block; border: 2px solid #ffebe0; padding: 10px; border-radius: 18px;">
+            
+            <div class="campo-input-container">
+                <input type="text" id="input-copia-cola" readonly style="text-align: center; font-size: 12px; background-color: #f5f5f5;">
+            </div>
+            
+            <button class="btn-finalizar" onclick="copiarPixCopiaCola()" style="background-color: #00bfa5; box-shadow: 0 6px 20px rgba(0, 191, 165, 0.3);">
+                📋 Copiar Código Pix
+            </button>
+        </div>
+    </div>
+</div>
+
+
     <!-- Vinculação do Script JavaScript Externo -->
     <script src="./js/main.js"></script>
+    <script src="./js/cadastro.js"></script>
 </body>
 
 </html>

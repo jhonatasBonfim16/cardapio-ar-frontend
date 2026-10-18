@@ -149,3 +149,17 @@
     cursor: pointer;
     box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
 }
+
+/*tela cadastro */
+/* Adicione isso no fim do seu carrinho.css */
+#auth-alternar:hover {
+    text-decoration: underline;
+}
+#form-auth {
+    display: flex;
+    flex-direction: column;
+}
+#form-auth input {
+    margin-bottom: 12px;
+}
+

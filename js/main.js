@@ -129,13 +129,19 @@ function higienizarEntrada(texto) {
         .trim();                 // Remove espaços extras nas pontas
 }
 
+
+
+
+
+
+
+const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
+
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {
-    const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
     const apiHost = API_PRODUCAO;
-
     // Injeta dinamicamente a query string
-    const url_pedidos = `${apiHost}/api/cardapio`;
+    const url_pedidos = `${apiHost}/api/pedido`;
 
     if (carrinho.length === 0) {
         alert("Sua sacola está vazia!");
@@ -146,6 +152,9 @@ async function enviarPedidoFinal() {
     const inputVal = higienizarEntrada(inputBruto);
     const tipoPedido = document.querySelector('input[name="tipo-pedido"]:checked').value;
 
+    // Captura o método de pagamento selecionado no HTML
+    const formaPagamento = document.querySelector('input[name="metodo-pagamento"]:checked').value;
+
     if (!inputVal) {
         alert("Por favor, preencha o campo de identificação/endereço obrigatório com caracteres válidos.");
         return;
@@ -154,31 +163,106 @@ async function enviarPedidoFinal() {
     const dados = {
         tipoPedido: tipoPedido,
         inputVal: inputVal,
-        carrinho: carrinho
+        carrinho: carrinho,
+        formaPagamento: formaPagamento
+    };
+
+    // Função auxiliar para pegar o valor do cookie no Front-end
+    function obterCookie(nome) {
+        const valor = `; ${document.cookie}`;
+        const partes = valor.split(`; ${nome}=`);
+        if (partes.length === 2) return partes.pop().split(';').shift();
     }
+
+    const tokenLogado = obterCookie('token_cardapio');
 
     try {
         const sendApi = await fetch(url_pedidos, {
             method: "POST",
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${tokenLogado}` // Enviando o token via cabeçalho padrão
+            },
             body: JSON.stringify(dados)
         });
+
+        // Se a API retornar 401, barra o fluxo e manda para o login
+        if (sendApi.status === 401) {
+            alert("Para finalizar o seu pedido e selecionar o método de pagamento, você precisa estar conectado à sua conta.");
+            fecharCarrinho();
+            abrirAuth();
+            return; // Para a execução com segurança sem limpar o carrinho
+        }
+
         const response = await sendApi.json();
 
-        if(!sendApi.ok) {
-            return
+        if (!sendApi.ok) {
+            alert(response.message || "Erro ao processar pedido.");
+            return; 
         }
-        window.open(`https://wa.me/${response.numeroWhats}?text=${encodeURIComponent(response.textoMensagem)}`, '_blank');
-    } catch (err) {
-        console.log("Erro ao enviar dados.:", err)
-    }
-    
 
-    // Limpa o carrinho após finalizar
-    carrinho = [];
-    atualizarBadgeCarrinho();
-    fecharCarrinho();
+        // =========================================================================
+        // [CORRIGIDO]: O WhatsApp agora abre para TODAS as formas de pagamento!
+        // =========================================================================
+        alert("Pedido recebido com sucesso! Encaminhando o resumo para o WhatsApp...");
+
+        // Se o método escolhido foi PIX, ALÉM de abrir o Zap, exibe o QR Code na tela
+        if (formaPagamento === 'pix' && response.pixCopiaCola) {
+            // Injeta os dados recebidos da sua API no modal de pagamento
+            document.getElementById('qrcode-pix').src = response.pixQrCodeBase64;
+            document.getElementById('input-copia-cola').value = response.pixCopiaCola;
+
+            // Abre o modal de pagamento na tela para o cliente ver o QR Code
+            document.getElementById('modal-pagamento').classList.add('ativo');
+
+            // Inicia a checagem automática (Polling)
+            if (typeof verificarStatusPagamento === "function") {
+                verificarStatusPagamento(response.pedidoId);
+            }
+        } else {
+            // Se for dinheiro ou cartão, apenas fecha a sacola (já que o Zap abriu acima)
+            fecharCarrinho();
+        }
+
+        // Limpa a sacola após o sucesso total do envio
+        carrinho = [];
+        atualizarBadgeCarrinho();
+
+
+    } catch (err) {
+        console.log("Erro ao enviar dados.:", err);
+        alert("Erro de comunicação com o servidor. O carrinho não foi esvaziado.");
+    }
 }
+
+
+
+
+
+
+
+
+function fecharModalPagamento() {
+    document.getElementById('modal-pagamento').classList.remove('ativo');
+}
+function fecharModalPagamento() {
+    // Para o cronômetro do Polling para não gastar requisições no Render
+    clearInterval(intervaloPollingPix);
+
+    // Remove a classe para esconder o modal da tela
+    document.getElementById('modal-pagamento').classList.remove('ativo');
+}
+
+
+function copiarPixCopiaCola() {
+    const input = document.getElementById('input-copia-cola');
+    if (!input.value) return;
+    input.select();
+    input.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(input.value);
+    alert("Código Pix Copia e Cola copiado com sucesso!");
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 // LÓGICA DE FILTRAGEM REATIVA POR CATEGORIAS
@@ -193,7 +277,6 @@ function alternarCategoria(elemento, categoria) {
 
 async function carregarCardapio() {
     try {
-        const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
         const apiHost = API_PRODUCAO;
 
         // Injeta dinamicamente a query string se houver categoria ativa
@@ -277,3 +360,55 @@ async function carregarCardapio() {
 }
 
 carregarCardapio();
+
+
+
+// Variável global para conseguir parar o Polling de qualquer lugar do código
+let intervaloPollingPix; 
+
+function verificarStatusPagamento(pedidoId) {
+    const urlCheck = `${API_PRODUCAO}/api/pedido/${pedidoId}`; 
+    
+    let tentativas = 0;
+    const maxTentativas = 60; // 60 tentativas * 10 segundos = 10 minutos de limite
+
+    clearInterval(intervaloPollingPix);
+
+    intervaloPollingPix = setInterval(async () => {
+        tentativas++;
+
+        if (tentativas > maxTentativas) {
+            clearInterval(intervaloPollingPix);
+            alert("O tempo para pagamento do Pix expirou. Se você já pagou, verifique com o gerente.");
+            fecharModalPagamento();
+            return;
+        }
+
+        try {
+            const resposta = await fetch(urlCheck, { method: "GET" });
+            
+            if (resposta.ok) {
+                const dados = await resposta.json();
+                console.log(dados)
+
+                // 🔥 O MOMENTO DO SUCESSO: DETECTOU QUE FOI PAGO!
+                if (dados.status === 'Pago') {
+                    // 1. Para o cronômetro do Polling na hora
+                    clearInterval(intervaloPollingPix);
+                    
+                    // 2. Fecha a tela do QR Code do Pix
+                    fecharModalPagamento();
+                    
+                    // 3. Mostra o alerta de sucesso para o cliente
+                    alert("✨ Pagamento Confirmado com Sucesso! ✨\nSeu pedido foi enviado para a cozinha.");
+                    
+                    // 4. [CORRIGIDO]: Abre o WhatsApp enviando a mensagem contendo o texto de "PEDIDO PAGO" para a cozinha!
+                    window.open(`https://wa.me/${dados.numeroWhats}?text=${encodeURIComponent(dados.textoMensagem)}`, '_blank');
+                }
+            }
+        } catch (erro) {
+            console.log("Erro ao checar status do Pix (Polling):", erro);
+        }
+    }, 10000); // Mantido o tempo de 10 segundos seguro contra o erro 429
+}
+

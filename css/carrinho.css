@@ -1,4 +1,27 @@
-/* CONFIGURAÇÃO DA JANELA MODAL DO CARRINHO (CSS PURO) */
+/* GALEGA O INÍCIO DO SEU ARQUIVO CSS/STYLE.CSS */
+:root {
+    --cor-fundo-app: #fffaf6;       
+    --cor-fundo-card: #ffffff;      
+    --cor-texto-principal: #2c1a11; 
+    --cor-texto-secundario: #6d4c41;
+    --cor-bordas: #ffebe0;          
+    --cor-fundo-caixas: #ffffff;    
+    --cor-destaque: #ff5722;        /* Laranja padrão original */
+}
+
+body.dark {
+    --cor-fundo-app: #0f0f11;       
+    --cor-fundo-card: #16161a;      
+    --cor-texto-principal: #f5f5f7; 
+    --cor-texto-secundario: #b3b3b3; /* Clareia as descrições no modo escuro */
+    --cor-bordas: #222226;          
+    --cor-fundo-caixas: #1c1c21;    
+    --cor-destaque: #ff7a45;        /* NOVO: Laranja vivo de alto contraste para telas escuras */
+}
+/* =========================================================================
+   CONFIGURAÇÃO DA JANELA MODAL DO CARRINHO E CADASTRO (UNIFICADO PREMIUM)
+   ========================================================================= */
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -22,14 +45,20 @@
 }
 
 .modal-container {
-    background-color: #fff9f5;
+    background-color: #fff9f5; /* Tom areia acolhedor original */
     width: 100%;
     max-width: 450px;
     border-radius: 32px 38px 0 0;
     padding: 24px;
     box-shadow: 0 -20px 40px rgba(0,0,0,0.15);
     transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1), background-color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Container da Sacola/Login em Grafite Fosco */
+body.dark .modal-container {
+    background-color: #16161a !important;
+    box-shadow: 0 -20px 40px rgba(0,0,0,0.4);
 }
 
 .modal-overlay.ativo .modal-container {
@@ -43,11 +72,25 @@
     margin-bottom: 20px;
     border-bottom: 2px solid #ffebe0;
     padding-bottom: 12px;
+    transition: border-color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Linha divisória escura */
+body.dark .modal-header,
+body.dark .modal-footer {
+    border-color: #222226 !important;
 }
 
 .modal-header h2 {
     font-size: 22px;
     color: #2c1a11;
+    transition: color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Título do Cabeçalho em Branco Gelo */
+body.dark .modal-header h2,
+body.dark .card-header h2 {
+    color: #f5f5f7 !important;
 }
 
 .btn-fechar {
@@ -56,6 +99,12 @@
     font-size: 20px;
     color: #6d4c41;
     cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Botão de fechar cinza claro */
+body.dark .btn-fechar {
+    color: #a8a8b3 !important;
 }
 
 .modal-corpo {
@@ -76,20 +125,39 @@
     align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid #ffebe0;
+    transition: border-color 0.3s ease;
+}
+
+body.dark .item-carrinho-linha {
+    border-color: #222226 !important;
 }
 
 .item-carrinho-linha h4 {
     font-size: 15px;
     color: #2c1a11;
+    transition: color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Nome do prato na sacola em Branco Gelo */
+body.dark .item-carrinho-linha h4 {
+    color: #f5f5f7 !important;
 }
 
 .item-carrinho-linha small {
     color: #8d6e63;
+    transition: color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Detalhes e observações em Cinza Claro Legível */
+body.dark .item-carrinho-linha small,
+body.dark .card-header p {
+    color: #b3b3b3 !important;
 }
 
 .modal-footer {
     border-top: 2px solid #ffebe0;
     padding-top: 16px;
+    transition: border-color 0.3s ease;
 }
 
 .total-container {
@@ -97,11 +165,23 @@
     justify-content: space-between;
     font-size: 16px;
     margin-bottom: 16px;
+    color: #2c1a11;
+    transition: color 0.3s ease;
+}
+
+body.dark .total-container {
+    color: #f5f5f7 !important;
 }
 
 .total-container strong {
     font-size: 20px;
     color: #e65100;
+    transition: color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Preço total em Laranja Neon de alto contraste */
+body.dark .total-container strong {
+    color: #ff7a45 !important;
 }
 
 .opcoes-entrega {
@@ -112,6 +192,13 @@
     border-radius: 14px;
     border: 2px solid #ffebe0;
     margin-bottom: 16px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Caixa de opções de entrega escura */
+body.dark .opcoes-entrega {
+    background-color: #1c1c21 !important;
+    border-color: #222226 !important;
 }
 
 .opcoes-entrega label {
@@ -119,6 +206,12 @@
     font-size: 13px;
     color: #6d4c41;
     cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+body.dark .opcoes-entrega label,
+body.dark #form-auth label {
+    color: #f5f5f7 !important;
 }
 
 .campo-input-container input {
@@ -131,10 +224,22 @@
     color: #2c1a11;
     outline: none;
     margin-bottom: 16px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* [MODO ESCURO]: Caixa de digitação escura com fonte branca */
+body.dark .campo-input-container input {
+    background-color: #1c1c21 !important;
+    border-color: #222226 !important;
+    color: #f5f5f7 !important;
 }
 
 .campo-input-container input:focus {
     border-color: #ff5722;
+}
+
+body.dark .campo-input-container input:focus {
+    border-color: #ff7a45 !important;
 }
 
 .btn-finalizar {
@@ -148,18 +253,121 @@
     border-radius: 18px;
     cursor: pointer;
     box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
+    transition: background-color 0.3s ease;
 }
 
-/*tela cadastro */
-/* Adicione isso no fim do seu carrinho.css */
+body.dark .btn-finalizar {
+    background-color: #ff7a45 !important;
+    box-shadow: 0 6px 20px rgba(255, 122, 69, 0.2);
+}
+
+/* =========================================================================
+   INTERFACE DA TELA DE CADASTRO / LOGIN (AUTH)
+   ========================================================================= */
+
+#auth-alternar {
+    color: #ff5722;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
 #auth-alternar:hover {
     text-decoration: underline;
 }
+
+/* [MODO ESCURO]: Link de cadastro em Laranja Neon */
+body.dark #auth-alternar {
+    color: #ff7a45 !important;
+}
+
 #form-auth {
     display: flex;
     flex-direction: column;
 }
+
 #form-auth input {
     margin-bottom: 12px;
 }
 
+#form-auth label {
+    font-size: 13px; 
+    color: #6d4c41; 
+    font-weight: bold; 
+    display: block; 
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+}
+
+/* =========================================================================
+   SUPORTE DE TRANSIÇÃO E TEMA PARA O CORPO (BODY) DO APP
+   ========================================================================= */
+
+body {
+    background-color: #fffaf6; /* Areia suave original */
+    color: #2c1a11;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark {
+    background-color: #0f0f11 !important; /* Chumbo Fosco */
+    color: #f5f5f7 !important;
+}
+
+/* =========================================================================
+   CONSERTO DE VETOR E ANIMAÇÃO DE ENTRADA (SOL / LUA)
+   ========================================================================= */
+
+/* Alinhamento geral estável do botão */
+#btn-tema {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important; /* Esconde o ícone antes de ele cair para dentro do botão */
+    width: 40px !important;
+    height: 40px !important;
+}
+
+/* Base de transição para os ícones */
+.icone-tema {
+    transition: all 0.3s ease;
+    transform-origin: center center;
+}
+
+/* Animação para a Lua surgir caindo do topo */
+#btn-tema #icone-lua {
+    animation: cairIcone 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Animação para o Sol surgir girando com brilho */
+#btn-tema #icone-sol {
+    animation: girarBrilho 0.4s ease-out forwards;
+}
+
+/* EFEITO 1: Caindo do Topo com efeito Elástico (Bounce) */
+@keyframes cairIcone {
+    0% {
+        transform: translateY(-40px) scale(0.5);
+        opacity: 0;
+    }
+    70% {
+        transform: translateY(4px) scale(1.05); /* Passa um pouquinho do centro */
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0) scale(1); /* Trava no centro perfeito */
+    }
+}
+
+/* EFEITO 2: Giro de Transição para o Sol */
+@keyframes girarBrilho {
+    0% {
+        transform: rotate(-90deg) scale(0.2);
+        opacity: 0;
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+        opacity: 1;
+    }
+}

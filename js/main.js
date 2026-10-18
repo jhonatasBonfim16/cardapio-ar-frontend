@@ -135,7 +135,7 @@ function higienizarEntrada(texto) {
 
 
 
-const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
+const API_PRODUCAO = "http://192.168.100.77:3000"//"https://cardapio-ar-backend.onrender.com";
 
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {
@@ -198,7 +198,7 @@ async function enviarPedidoFinal() {
 
         if (!sendApi.ok) {
             alert(response.message || "Erro ao processar pedido.");
-            return; 
+            return;
         }
 
         // =========================================================================
@@ -304,7 +304,7 @@ async function carregarCardapio() {
                 const precoFormatado = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
 
                 const urlModelo = prato.modelo_3d_url || prato.modelo3d || '';
-                const modelo3d_ios = prato.modelo3d_ios
+                const urlModelo3d_ios = prato.modelo3d_ios
                 const urlFoto = prato.imagem_url || prato.foto || '';
                 const nomeEscapado = nome.replace(/'/g, "\\'");
 
@@ -312,26 +312,28 @@ async function carregarCardapio() {
                 cardDiv.className = 'card';
                 cardDiv.innerHTML = `
                     <div class="viewport-ar">
-                        <model-viewer 
-                            src="${urlModelo}" 
-                            ios-src="${modelo3d_ios}#allowsContentScaling=0" 
-                            poster="${urlFoto}"
-                            ar                         
-                            ar-scale="fixed"
-                            ar-modes="webxr scene-viewer quick-look" 
-                            camera-controls 
-                            touch-action="pan-y"
-                            shadow-intensity="1"
-                            exposure="1.2"
-                            alt="Modelo 3D de ${nome}">
-                            
-                            <button slot="ar-button" class="btn-ar">
-                                <svg xmlns="http://w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                Ver em 3D
-                            </button>
-                        </model-viewer>
+                    <model-viewer 
+                        src="" 
+                        ios-src="" 
+                        data-src-real="${urlModelo}" 
+                        data-ios-src-real="${urlModelo3d_ios}" 
+                        poster="${urlFoto}"
+                        ar                         
+                        ar-scale="fixed" 
+                        ar-modes="quick-look webxr scene-viewer" 
+                        camera-controls 
+                        touch-action="pan-y"
+                        shadow-intensity="1"
+                        exposure="1.2"
+                        alt="Modelo 3D de ${nome}">
+                        
+                        <button slot="ar-button" class="btn-ar">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Ver em 3D
+                        </button>
+                    </model-viewer> 
                     </div>
                     
                     <div class="card-detalhes">
@@ -348,7 +350,9 @@ async function carregarCardapio() {
                         </button>
                     </div>
                 `;
-
+                setTimeout(() => {
+                    ativarGerenciadorDeMemoriaAR();
+                }, 100);
                 container.appendChild(cardDiv);
             } catch (erroItem) {
                 console.error("Erro ao renderizar item:", erroItem);
@@ -361,14 +365,57 @@ async function carregarCardapio() {
 
 carregarCardapio();
 
+function ativarGerenciadorDeMemoriaAR() {
+    // 1. Criamos o observador de tela
+    const observadorAR = new IntersectionObserver((entradas) => {
+        entradas.forEach(entrada => {
+            const modelViewer = entrada.target;
+
+            // Recuperamos os links reais que guardamos nos metadados (dataset)
+            const urlGlb = modelViewer.dataset.srcReal;
+            const urlUsdz = modelViewer.dataset.iosSrcReal;
+
+            if (entrada.isIntersecting) {
+                // SUCESSO: O prato entrou na tela, colocamos o modelo 3D para rodar
+                if (!modelViewer.getAttribute('src') && urlGlb) {
+                    modelViewer.setAttribute('src', urlGlb);
+                    if (urlUsdz) {
+                        modelViewer.setAttribute('ios-src', `${urlUsdz}#allowsContentScaling=0`);
+                    }
+                   // console.log(`🤖 Motor 3D carregado para: ${modelViewer.alt}`);
+                }
+            } else {
+                // SUCESSO: O prato saiu da tela, limpamos os atributos para DESTRUIR o motor 3D da RAM
+                if (modelViewer.getAttribute('src')) {
+                    modelViewer.removeAttribute('src');
+                    modelViewer.removeAttribute('ios-src');
+                   // console.log(`❌ Motor 3D destruído da memória para: ${modelViewer.alt}`);
+                }
+            }
+        });
+    }, {
+        root: null, // Usa a tela do celular como referência
+        // [AJUSTADO]: Aumentamos a margem inferior para carregar o modelo 250px antes de aparecer na tela
+        rootMargin: "-10% 0px -20% 0px", 
+        // [CORRIGIDO]: Mudado para 0.0. Agora o gatilho dispara no exato instante em que o prato surge,
+        // garantindo que o último prato carregue mesmo se a rolagem da página acabar.
+        threshold: 0.0
+    });
+
+
+    // 2. Selecionamos todos os model-viewers da página e jogamos no observador
+    const todosOsModelos = document.querySelectorAll('model-viewer');
+    todosOsModelos.forEach(modelo => observadorAR.observe(modelo));
+}
+
 
 
 // Variável global para conseguir parar o Polling de qualquer lugar do código
-let intervaloPollingPix; 
+let intervaloPollingPix;
 
 function verificarStatusPagamento(pedidoId) {
-    const urlCheck = `${API_PRODUCAO}/api/pedido/${pedidoId}`; 
-    
+    const urlCheck = `${API_PRODUCAO}/api/pedido/${pedidoId}`;
+
     let tentativas = 0;
     const maxTentativas = 60; // 60 tentativas * 10 segundos = 10 minutos de limite
 
@@ -386,7 +433,7 @@ function verificarStatusPagamento(pedidoId) {
 
         try {
             const resposta = await fetch(urlCheck, { method: "GET" });
-            
+
             if (resposta.ok) {
                 const dados = await resposta.json();
                 console.log(dados)
@@ -395,13 +442,13 @@ function verificarStatusPagamento(pedidoId) {
                 if (dados.status === 'Pago') {
                     // 1. Para o cronômetro do Polling na hora
                     clearInterval(intervaloPollingPix);
-                    
+
                     // 2. Fecha a tela do QR Code do Pix
                     fecharModalPagamento();
-                    
+
                     // 3. Mostra o alerta de sucesso para o cliente
                     alert("✨ Pagamento Confirmado com Sucesso! ✨\nSeu pedido foi enviado para a cozinha.");
-                    
+
                     // 4. [CORRIGIDO]: Abre o WhatsApp enviando a mensagem contendo o texto de "PEDIDO PAGO" para a cozinha!
                     window.open(`https://wa.me/${dados.numeroWhats}?text=${encodeURIComponent(dados.textoMensagem)}`, '_blank');
                 }
@@ -411,4 +458,187 @@ function verificarStatusPagamento(pedidoId) {
         }
     }, 10000); // Mantido o tempo de 10 segundos seguro contra o erro 429
 }
+
+
+
+////
+
+
+function atualizarStatusFuncionamento() {
+    const elementoStatus = document.getElementById('status-loja');
+    if (!elementoStatus) return;
+
+    const agora = new Date();
+    const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+    const hora = agora.getHours();
+    const minuto = agora.getMinutes();
+    
+    // Converte a hora atual em minutos totais desde o início do dia para facilitar o cálculo
+    // Ex: 18h30 = 18 * 60 + 30 = 1110 minutos
+    const minutosAtuais = (hora * 60) + minuto;
+
+    const inicioMinutos = 18 * 60;       // 18h00 em minutos (1080)
+    const fimMinutos = (23 * 60) + 30;   // 23h30 em minutos (1410)
+    const avisoBreveMinutos = fimMinutos - 30; // 23h00 em minutos (Falta 30 min para fechar)
+
+    // Segunda-feira (dia 1) o restaurante fecha o dia todo
+    if (diaSemana === 1) {
+        elementoStatus.innerText = "Fechado agora";
+        elementoStatus.className = "status-loja-box status-fechado";
+        return;
+    }
+
+    // Verifica se está dentro do horário de funcionamento (18h às 23h30)
+    if (minutosAtuais >= inicioMinutos && minutosAtuais < fimMinutos) {
+        // Se faltar 30 minutos ou menos para fechar (entre 23h00 e 23h30)
+        if (minutosAtuais >= avisoBreveMinutos) {
+            elementoStatus.innerText = "Fechar em breve";
+            elementoStatus.className = "status-loja-box status-breve";
+        } else {
+            // Horário normal de funcionamento
+            elementoStatus.innerText = "Aberto agora";
+            elementoStatus.className = "status-loja-box status-aberto";
+        }
+    } else {
+        // Fora do horário
+        elementoStatus.innerText = "Fechado agora";
+        elementoStatus.className = "status-loja-box status-fechado";
+    }
+}
+
+// Executa a função imediatamente ao carregar o script
+atualizarStatusFuncionamento();
+// Atualiza a cada 1 minuto caso o cliente fique com o cardápio aberto no celular
+setInterval(atualizarStatusFuncionamento, 60000);
+
+
+
+
+
+////
+
+
+
+// FUNÇÃO PARA DETECTAR E APLICAR O TEMA CORRETO
+function inicializarTema() {
+    const temaSalvo = localStorage.getItem('tema_preferido');
+    const sistemaModoEscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Se o usuário preferir dark, força a execução do bloco dark
+    if (temaSalvo === 'dark' || (!temaSalvo && sistemaModoEscuro)) {
+        document.body.classList.add('dark');
+    }
+    
+    // Roda a função uma vez para pintar as telas na cor correta de primeira
+    alternarTemaManual(); 
+    // Desfaz o toggle caso ele tenha invertido a preferência inicial
+    if (temaSalvo === 'light' || (!temaSalvo && !sistemaModoEscuro)) {
+        document.body.classList.remove('dark');
+        alternarTemaManual();
+    }
+}
+
+
+// FUNÇÃO CHAMADA AO CLICAR NO BOTÃO DO TOPO
+function alternarTemaManual() {
+    const corpoElemento = document.body;
+    const sol = document.getElementById('icone-sol');
+    const lua = document.getElementById('icone-lua');
+
+    // 1. Liga ou desliga a classe .dark do body
+    corpoElemento.classList.toggle('dark');
+
+    // 2. Coleta de elementos com seletores isolados e seguros
+    const modalContainers = document.querySelectorAll('.modal-container');
+    const inputsDigitacao = document.querySelectorAll('.campo-input-container input');
+    const opcoesEntrega = document.querySelectorAll('.opcoes-entrega');
+    const titulosModais = document.querySelectorAll('.modal-header h2, .modal-footer label');
+    const nomesPratosSacola = document.querySelectorAll('.item-carrinho-linha h4, .total-container');
+    const textosSecundarios = document.querySelectorAll('.item-carrinho-linha small, .btn-fechar');
+    
+    // Elementos laranjas isolados por ID
+    const linkAlternarAuth = document.getElementById('auth-alternar');
+    const precoTotalSacola = document.querySelector('.total-container strong');
+
+    if (corpoElemento.classList.contains('dark')) {
+        localStorage.setItem('tema_preferido', 'dark'); 
+        
+        // Ativa os displays e dispara a animação de rotação do Sol
+        if(sol) sol.style.display = 'block';
+        if(lua) lua.style.display = 'none';
+
+        // =========================================================================
+        // FORÇAR MODO ESCURO REAL (CORES DE ALTO CONTRASTE NEON)
+        // =========================================================================
+        corpoElemento.style.backgroundColor = '#0f0f11';
+        corpoElemento.style.color = '#f5f5f7';
+
+        modalContainers.forEach(el => el.style.setProperty('background-color', '#16161a', 'important'));
+        opcoesEntrega.forEach(el => el.style.setProperty('background-color', '#1c1c21', 'important'));
+        
+        inputsDigitacao.forEach(el => {
+            el.style.setProperty('background-color', '#1c1c21', 'important');
+            el.style.setProperty('color', '#f5f5f7', 'important');
+            el.style.setProperty('border-color', '#2b2b33', 'important');
+        });
+
+        // Aplica o Laranja Neon nos Títulos para dar o visual futurista premium
+        titulosModais.forEach(el => el.style.setProperty('color', '#ff7a45', 'important'));
+        if(linkAlternarAuth) linkAlternarAuth.style.setProperty('color', '#ff7a45', 'important');
+        if(precoTotalSacola) precoTotalSacola.style.setProperty('color', '#ff7a45', 'important');
+
+        // Mantém os nomes dos pratos na sacola em Branco para contraste
+        nomesPratosSacola.forEach(el => el.style.setProperty('color', '#f5f5f7', 'important'));
+        textosSecundarios.forEach(el => el.style.setProperty('color', '#b3b3b3', 'important'));
+
+        // Força os labels do formulário de login se eles existirem
+        const labelsAuth = document.querySelectorAll('#form-auth label');
+        labelsAuth.forEach(el => el.style.setProperty('color', '#ff7a45', 'important'));
+
+    } else {
+        localStorage.setItem('tema_preferido', 'light');
+        
+        // Faz o Sol sumir e a Lua cair elástica do topo através do @keyframes do CSS
+        if(sol) sol.style.display = 'none';
+        if(lua) lua.style.display = 'block';
+
+        // =========================================================================
+        // RETORNAR AO MODO CLARO ORIGINAL AREIA
+        // =========================================================================
+        corpoElemento.style.backgroundColor = '#fffaf6';
+        corpoElemento.style.color = '#2c1a11';
+
+        modalContainers.forEach(el => el.style.setProperty('background-color', '#fff9f5', 'important'));
+        opcoesEntrega.forEach(el => el.style.setProperty('background-color', '#ffffff', 'important'));
+        
+        inputsDigitacao.forEach(el => {
+            el.style.setProperty('background-color', '#ffffff', 'important');
+            el.style.setProperty('color', '#2c1a11', 'important');
+            el.style.setProperty('border-color', '#ffebe0', 'important');
+        });
+
+        titulosModais.forEach(el => el.style.setProperty('color', '#2c1a11', 'important'));
+        nomesPratosSacola.forEach(el => el.style.setProperty('color', '#2c1a11', 'important'));
+        textosSecundarios.forEach(el => el.style.setProperty('color', '#6d4c41', 'important'));
+        
+        if(linkAlternarAuth) linkAlternarAuth.style.setProperty('color', '#ff5722', 'important');
+        if(precoTotalSacola) precoTotalSacola.style.setProperty('color', '#e65100', 'important');
+
+        const labelsAuth = document.querySelectorAll('#form-auth label');
+        labelsAuth.forEach(el => el.style.setProperty('color', '#6d4c41', 'important'));
+    }
+}
+
+
+
+
+// Escuta mudanças automáticas se o usuário alterar as configurações do próprio celular no meio do uso
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (!localStorage.getItem('tema_preferido')) {
+        inicializarTema();
+    }
+});
+
+// Executa automaticamente ao ler o script para o app abrir na cor certa instantaneamente
+inicializarTema();
 

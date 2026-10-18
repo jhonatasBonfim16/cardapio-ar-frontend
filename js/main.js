@@ -135,7 +135,7 @@ function higienizarEntrada(texto) {
 
 
 
-const API_PRODUCAO = "http://192.168.100.77:3000"//"https://cardapio-ar-backend.onrender.com";
+const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
 
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {

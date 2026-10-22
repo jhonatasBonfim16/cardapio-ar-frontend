@@ -641,4 +641,3 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 // Executa automaticamente ao ler o script para o app abrir na cor certa instantaneamente
 inicializarTema();
-

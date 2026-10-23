@@ -377,33 +377,133 @@ function ativarGerenciadorDeMemoriaAR() {
 
             if (entrada.isIntersecting) {
                 // SUCESSO: O prato entrou na tela, colocamos o modelo 3D para rodar
+async function carregarCardapio() {
+    try {
+        const apiHost = API_PRODUCAO;
+
+        // Injeta dinamicamente a query string se houver categoria ativa
+        const urlFinal = categoriaAtual ? `${apiHost}/api/cardapio?categoria=${categoriaAtual}` : `${apiHost}/api/cardapio`;
+
+        const response = await fetch(urlFinal);
+        const pratos = await response.json();
+
+        const container = document.getElementById('lista-cardapio');
+        container.innerHTML = '';
+
+        if (!Array.isArray(pratos)) {
+            console.error("A API não retornou uma lista válida de pratos.");
+            return;
+        }
+
+        // [OTIMIZAÇÃO CRUCIAL]: Criamos uma string única acumulando todos os cards
+        let htmlAcumulado = '';
+
+        pratos.forEach((prato, index) => {
+            try {
+                const id = prato.id || index;
+                const nome = prato.nome || 'Prato sem nome';
+                const descricao = prato.descricao || 'Sem descrição cadastrada.';
+
+                const precoNum = parseFloat(prato.preco);
+                const precoFormatado = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
+
+                const urlModelo = prato.modelo_3d_url || prato.modelo3d || '';
+                const urlModelo3d_ios = prato.modelo3d_ios || '';
+                const urlFoto = prato.imagem_url || prato.foto || '';
+                const nomeEscapado = nome.replace(/'/g, "\\'");
+
+                // Concatenamos o HTML puro na string de templates
+                htmlAcumulado += `
+                    <div class="card">
+                        <div class="viewport-ar">
+                        <model-viewer 
+                            src="" 
+                            ios-src="" 
+                            data-src-real="${urlModelo}" 
+                            data-ios-src-real="${urlModelo3d_ios}" 
+                            poster="${urlFoto}"
+                            ar                         
+                            ar-scale="fixed" 
+                            ar-modes="quick-look webxr scene-viewer" 
+                            camera-controls 
+                            touch-action="pan-y"
+                            shadow-intensity="1"
+                            exposure="1.2"
+                            alt="Modelo 3D de ${nome}">
+                            
+                            <button slot="ar-button" class="btn-ar">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                Ver em 3D
+                            </button>
+                        </model-viewer> 
+                        </div>
+                        
+                        <div class="card-detalhes">
+                            <div class="card-header">
+                                <div>
+                                    <h2>${nome}</h2>
+                                    <p>${descricao}</p>
+                                </div>
+                                <span class="preco">R$ ${precoFormatado}</span>
+                            </div>
+                            
+                            <button class="btn-adicionar" onclick="adicionarAoPedido(${id}, '${nomeEscapado}', ${precoNum})">
+                                Adicionar ao Pedido
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (erroItem) {
+                console.error("Erro ao processar item:", erroItem);
+            }
+        });
+
+        // Injeta todo o HTML de uma vez só no DOM (Economiza muita CPU)
+        container.innerHTML = htmlAcumulado;
+
+        // 🔥 [CORREÇÃO MASTER]: Ativa o gerenciador APENAS UMA VEZ após todo o HTML estar pronto no navegador
+        ativarGerenciadorDeMemoriaAR();
+
+    } catch (erro) {
+        console.error("Erro na conexão com o servidor:", erro);
+    }
+}
+
+// Inicializa o cardápio
+carregarCardapio();
+
+function ativarGerenciadorDeMemoriaAR() {
+    const observadorAR = new IntersectionObserver((entradas) => {
+        entradas.forEach(entrada => {
+            const modelViewer = entrada.target;
+            const urlGlb = modelViewer.dataset.srcReal;
+            const urlUsdz = modelViewer.dataset.iosSrcReal;
+
+            if (entrada.isIntersecting) {
                 if (!modelViewer.getAttribute('src') && urlGlb) {
                     modelViewer.setAttribute('src', urlGlb);
                     if (urlUsdz) {
                         modelViewer.setAttribute('ios-src', `${urlUsdz}#allowsContentScaling=0`);
                     }
-                   // console.log(`🤖 Motor 3D carregado para: ${modelViewer.alt}`);
                 }
             } else {
-                // SUCESSO: O prato saiu da tela, limpamos os atributos para DESTRUIR o motor 3D da RAM
                 if (modelViewer.getAttribute('src')) {
                     modelViewer.removeAttribute('src');
                     modelViewer.removeAttribute('ios-src');
-                   // console.log(`❌ Motor 3D destruído da memória para: ${modelViewer.alt}`);
                 }
             }
         });
     }, {
-        root: null, // Usa a tela do celular como referência
-        // [AJUSTADO]: Aumentamos a margem inferior para carregar o modelo 250px antes de aparecer na tela
-        rootMargin: "-10% 0px -20% 0px", 
-        // [CORRIGIDO]: Mudado para 0.0. Agora o gatilho dispara no exato instante em que o prato surge,
-        // garantindo que o último prato carregue mesmo se a rolagem da página acabar.
+        root: null,
+        // 🎯 [AJUSTE DE PERFORMANCE]: Mudamos para "100px 0px". Margens negativas como (-10%) 
+        // dizem ao navegador para cortar a área de detecção dentro da tela, o que fazia os modelos 
+        // sumirem mesmo enquanto o usuário ainda estava tentando olhar para eles se o card fosse grande!
+        rootMargin: "100px 0px 100px 0px", 
         threshold: 0.0
     });
 
-
-    // 2. Selecionamos todos os model-viewers da página e jogamos no observador
     const todosOsModelos = document.querySelectorAll('model-viewer');
     todosOsModelos.forEach(modelo => observadorAR.observe(modelo));
 }

@@ -307,7 +307,7 @@ async function carregarCardapio() {
                 const precoNum = parseFloat(prato.preco);
                 const precoFormatado = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
 
-                const urlModelo = "https://modelviewer.dev/shared-assets/models/Astronaut.glb" //prato.modelo_3d_url || prato.modelo3d || '';
+                const urlModelo = "prato.modelo_3d_url || prato.modelo3d || '';
                 const urlModelo3d_ios = prato.modelo3d_ios || '';
                 const urlFoto = prato.imagem_url || prato.foto || '';
                 const nomeEscapado = nome.replace(/'/g, "\\'");
@@ -319,8 +319,7 @@ async function carregarCardapio() {
                         <model-viewer 
                             src="${urlModelo}" 
                             ios-src="${urlModelo3d_ios}" 
-                            <!--data-src-real="${urlModelo}" -->
-                            <!-- data-ios-src-real="${urlModelo3d_ios}" -->
+                            
                             ar                         
                             ar-scale="fixed" 
                             ar-modes="webxr quick-look scene-viewer"

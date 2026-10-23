@@ -317,11 +317,10 @@ async function carregarCardapio() {
                     <div class="card">
                         <div class="viewport-ar">
                         <model-viewer 
-                            src="" 
-                            ios-src="" 
-                            data-src-real="${urlModelo}" 
-                            data-ios-src-real="${urlModelo3d_ios}" 
-                            poster="${urlFoto}"
+                            src="${urlModelo}" 
+                            ios-src="${urlModelo3d_ios}" 
+                            <!--data-src-real="${urlModelo}" -->
+                            <!-- data-ios-src-real="${urlModelo3d_ios}" -->
                             ar                         
                             ar-scale="fixed" 
                             ar-modes="webxr quick-look scene-viewer"
@@ -364,7 +363,7 @@ async function carregarCardapio() {
         container.innerHTML = htmlAcumulado;
 
         // 🔥 [CORREÇÃO MASTER]: Ativa o gerenciador APENAS UMA VEZ após todo o HTML estar pronto no navegador
-        ativarGerenciadorDeMemoriaAR();
+       // ativarGerenciadorDeMemoriaAR();
 
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);

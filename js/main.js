@@ -320,7 +320,7 @@ async function carregarCardapio() {
                         poster="${urlFoto}"
                         ar                         
                         ar-scale="fixed" 
-                        ar-modes="quick-look webxr scene-viewer" 
+                        ar-modes="scene-viewer quick-look webxr" 
                         camera-controls 
                         touch-action="pan-y"
                         shadow-intensity="1"

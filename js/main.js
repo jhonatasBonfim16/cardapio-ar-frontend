@@ -135,7 +135,7 @@ function higienizarEntrada(texto) {
 
 
 
-const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
+const API_PRODUCAO = ""  //"https://cardapio-ar-backend.onrender.com";
 
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {
@@ -641,4 +641,3 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 // Executa automaticamente ao ler o script para o app abrir na cor certa instantaneamente
 inicializarTema();
-

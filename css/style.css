@@ -179,6 +179,7 @@ main {
     overflow: hidden;
     /* Corta rigidamente qualquer pixel que tente vazar */
     transition: background-color 0.3s ease;
+    
 }
 
 /* GARANTE QUE O MOTOR OCUPE 100% DO TAMANHO DO CARD */
@@ -202,6 +203,26 @@ model-viewer {
     border-radius: 28px 28px 0 0 !important;
     transition: background-color 0.3s ease;
 }
+
+/* Garante que a foto ocupe o mesmo espaço do motor 3D se for acionada */
+.foto-fallback {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 3; /* Fica acima do canvas caso o 3D quebre */
+    border-radius: 28px 28px 0 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Oculta a foto por padrão para quem tem internet normal */
+.ocultar-fallback {
+    opacity: 0;
+    pointer-events: none;
+}
+
 
 
 /* PÍLULA DE REALIDADE AUMENTADA CORRIGIDA (Cravada no canto inferior direito) */

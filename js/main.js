@@ -135,7 +135,7 @@ function higienizarEntrada(texto) {
 
 
 
-const API_PRODUCAO = ""  //"https://cardapio-ar-backend.onrender.com";
+const API_PRODUCAO = "http://192.168.100.77:3000"//"https://cardapio-ar-backend.onrender.com";
 
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {
@@ -313,14 +313,11 @@ async function carregarCardapio() {
                 cardDiv.innerHTML = `
                     <div class="viewport-ar">
                     <model-viewer 
-                        src="" 
-                        ios-src="" 
                         data-src-real="${urlModelo}" 
                         data-ios-src-real="${urlModelo3d_ios}" 
-                        poster="${urlFoto}"
                         ar                         
                         ar-scale="fixed" 
-                        ar-modes="quick-look webxr scene-viewer" 
+                        ar-modes="webxr scene-viewer quick-look " 
                         camera-controls 
                         touch-action="pan-y"
                         shadow-intensity="1"
@@ -350,14 +347,15 @@ async function carregarCardapio() {
                         </button>
                     </div>
                 `;
-                setTimeout(() => {
-                    ativarGerenciadorDeMemoriaAR();
-                }, 100);
+                    
+                
                 container.appendChild(cardDiv);
             } catch (erroItem) {
                 console.error("Erro ao renderizar item:", erroItem);
             }
+            
         });
+        ativarGerenciadorDeMemoriaAR();
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);
     }
@@ -394,13 +392,12 @@ function ativarGerenciadorDeMemoriaAR() {
             }
         });
     }, {
-        root: null, // Usa a tela do celular como referência
-        // [AJUSTADO]: Aumentamos a margem inferior para carregar o modelo 250px antes de aparecer na tela
-        rootMargin: "-10% 0px -20% 0px", 
-        // [CORRIGIDO]: Mudado para 0.0. Agora o gatilho dispara no exato instante em que o prato surge,
-        // garantindo que o último prato carregue mesmo se a rolagem da página acabar.
+        root: null, 
+        // Valores positivos criam uma "margem virtual" que detecta o card vindo antes dele surgir na tela
+        rootMargin: "200px 0px 200px 0px", 
         threshold: 0.0
     });
+
 
 
     // 2. Selecionamos todos os model-viewers da página e jogamos no observador
@@ -641,3 +638,4 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 // Executa automaticamente ao ler o script para o app abrir na cor certa instantaneamente
 inicializarTema();
+

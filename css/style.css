@@ -223,6 +223,12 @@ model-viewer {
     pointer-events: none;
 }
 
+.viewport-ar, model-viewer {
+    width: 100%;
+    height: 300px; /* Ou a altura que preferir para o card */
+    display: block;
+}
+
 
 
 /* PÍLULA DE REALIDADE AUMENTADA CORRIGIDA (Cravada no canto inferior direito) */

@@ -355,7 +355,9 @@ async function carregarCardapio() {
             }
             
         });
-        ativarGerenciadorDeMemoriaAR();
+        setTimeout(() => {
+            ativarGerenciadorDeMemoriaAR();
+        }, 150);
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);
     }
@@ -364,46 +366,73 @@ async function carregarCardapio() {
 carregarCardapio();
 
 function ativarGerenciadorDeMemoriaAR() {
-    // 1. Criamos o observador de tela
+    // Array para rastrear quais instâncias de <model-viewer> estão com o modelo 3D carregado na RAM
+    let modelosAtivos = [];
+    const MAX_MODELOS_ATIVOS = 3;
+
     const observadorAR = new IntersectionObserver((entradas) => {
         entradas.forEach(entrada => {
             const modelViewer = entrada.target;
-
-            // Recuperamos os links reais que guardamos nos metadados (dataset)
             const urlGlb = modelViewer.dataset.srcReal;
             const urlUsdz = modelViewer.dataset.iosSrcReal;
 
             if (entrada.isIntersecting) {
-                // SUCESSO: O prato entrou na tela, colocamos o modelo 3D para rodar
-                if (!modelViewer.getAttribute('src') && urlGlb) {
+                // Se o modelo já não estiver na lista de ativos e tiver uma URL válida
+                if (!modelosAtivos.includes(modelViewer) && urlGlb) {
+                    
+                    // Se estourar o limite de 2, descarrega o modelo mais antigo da memória antes de ligar o novo
+                    if (modelosAtivos.length >= MAX_MODELOS_ATIVOS) {
+                        const modeloAntigo = modelosAtivos.shift(); // Remove o primeiro da fila
+                        descarregarModeloDoWebGL(modeloAntigo);
+                    }
+
+                    // Ativa o motor 3D do modelo atual
                     modelViewer.setAttribute('src', urlGlb);
                     if (urlUsdz) {
                         modelViewer.setAttribute('ios-src', `${urlUsdz}#allowsContentScaling=0`);
                     }
-                   // console.log(`🤖 Motor 3D carregado para: ${modelViewer.alt}`);
+                    
+                    // Adiciona o elemento atual ao fim da fila de ativos
+                    modelosAtivos.push(modelViewer);
                 }
             } else {
-                // SUCESSO: O prato saiu da tela, limpamos os atributos para DESTRUIR o motor 3D da RAM
-                if (modelViewer.getAttribute('src')) {
-                    modelViewer.removeAttribute('src');
-                    modelViewer.removeAttribute('ios-src');
-                   // console.log(`❌ Motor 3D destruído da memória para: ${modelViewer.alt}`);
+                // Se saiu da tela, remove da fila e limpa imediatamente o WebGL
+                if (modelosAtivos.includes(modelViewer)) {
+                    modelosAtivos = modelosAtivos.filter(m => m !== modelViewer);
+                    descarregarModeloDoWebGL(modelViewer);
                 }
             }
         });
     }, {
         root: null, 
-        // Valores positivos criam uma "margem virtual" que detecta o card vindo antes dele surgir na tela
-        rootMargin: "200px 0px 200px 0px", 
+        rootMargin: "150px 0px 150px 0px", // Margem ajustada para não pré-carregar coisas demais
         threshold: 0.0
     });
 
+    // Função interna crucial que força o navegador a liberar a RAM liberando o contexto WebGL
+    function descarregarModeloDoWebGL(el) {
+        if (!el) return;
+        
+        // 1. Remove os caminhos dos arquivos
+        el.removeAttribute('src');
+        el.removeAttribute('ios-src');
+        
+        // 2. Hack de performance para forçar o Three.js interno do componente a limpar o cache geométrico
+        if (typeof el.getThreeRenderer === 'function') {
+            try {
+                const renderer = el.getThreeRenderer();
+                if (renderer) renderer.info.reset();
+            } catch (e) {
+                console.warn("Erro ao resetar renderer interno:", e);
+            }
+        }
+    }
 
-
-    // 2. Selecionamos todos os model-viewers da página e jogamos no observador
+    // Seleciona e observa todos os model-viewers
     const todosOsModelos = document.querySelectorAll('model-viewer');
     todosOsModelos.forEach(modelo => observadorAR.observe(modelo));
 }
+
 
 
 

@@ -292,7 +292,7 @@ async function carregarCardapio() {
                         data-ios-src-real="${urlModelo3d_ios}" 
                         ar                         
                         ar-scale="fixed" 
-                        ar-modes="webxr quick-look" 
+                        ar-modes="webxr quick-look scene-viewer" 
                         camera-controls 
                         interaction-prompt="none" 
                         loading="lazy"
@@ -399,7 +399,6 @@ function ativarGerenciadorDeMemoriaAR() {
         mv.addEventListener('ar-status', (e) => {
             const status = e.detail.status;
             console.log('[AR]', status); // útil para depurar no chrome://inspect
-            alert('[AR]', status)
 
             if (status === 'session-started') {
                 viewerEmAR = mv;

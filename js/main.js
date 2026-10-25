@@ -3,6 +3,8 @@ let iconLixeira = document.getElementById("iconLixeira")
 let carrinho = [];
 let categoriaAtual = '';
 
+const API_PRODUCAO = "http://192.168.100.77:3000"//"https://cardapio-ar-backend.onrender.com";
+
 // Função Reativa que gerencia a adição e soma de itens
 function adicionarAoPedido(id, nomePrato, precoOriginal) {
     // Verifica se o item já está no carrinho
@@ -132,11 +134,6 @@ function higienizarEntrada(texto) {
 
 
 
-
-
-
-const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
-
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
 async function enviarPedidoFinal() {
     const apiHost = API_PRODUCAO;
@@ -242,28 +239,6 @@ async function enviarPedidoFinal() {
 
 
 
-
-function fecharModalPagamento() {
-    document.getElementById('modal-pagamento').classList.remove('ativo');
-}
-function fecharModalPagamento() {
-    // Para o cronômetro do Polling para não gastar requisições no Render
-    clearInterval(intervaloPollingPix);
-
-    // Remove a classe para esconder o modal da tela
-    document.getElementById('modal-pagamento').classList.remove('ativo');
-}
-
-
-function copiarPixCopiaCola() {
-    const input = document.getElementById('input-copia-cola');
-    if (!input.value) return;
-    input.select();
-    input.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(input.value);
-    alert("Código Pix Copia e Cola copiado com sucesso!");
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 // LÓGICA DE FILTRAGEM REATIVA POR CATEGORIAS
@@ -304,7 +279,7 @@ async function carregarCardapio() {
                 const precoFormatado = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
 
                 const urlModelo = prato.modelo_3d_url || prato.modelo3d || '';
-                const urlModelo3d_ios = prato.modelo3d_ios
+                const urlModelo3d_ios = prato.modelo3d_ios || '';
                 const urlFoto = prato.imagem_url || prato.foto || '';
                 const nomeEscapado = nome.replace(/'/g, "\\'");
 
@@ -317,12 +292,15 @@ async function carregarCardapio() {
                         data-ios-src-real="${urlModelo3d_ios}" 
                         ar                         
                         ar-scale="fixed" 
-                        ar-modes="webxr scene-viewer quick-look " 
+                        ar-modes="scene-viewer webxr quick-look" 
                         camera-controls 
+                        interaction-prompt="none" 
+                        loading="lazy"
                         touch-action="pan-y"
                         shadow-intensity="1"
                         exposure="1.2"
                         alt="Modelo 3D de ${nome}">
+
                         
                         <button slot="ar-button" class="btn-ar">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -364,307 +342,76 @@ async function carregarCardapio() {
 }
 
 carregarCardapio();
-
 function ativarGerenciadorDeMemoriaAR() {
-    // Array para rastrear quais instâncias de <model-viewer> estão com o modelo 3D carregado na RAM
-    let modelosAtivos = [];
-    const MAX_MODELOS_ATIVOS = 3;
-
-    const observadorAR = new IntersectionObserver((entradas) => {
-        entradas.forEach(entrada => {
-            const modelViewer = entrada.target;
-            const urlGlb = modelViewer.dataset.srcReal;
-            const urlUsdz = modelViewer.dataset.iosSrcReal;
-
-            if (entrada.isIntersecting) {
-                // Se o modelo já não estiver na lista de ativos e tiver uma URL válida
-                if (!modelosAtivos.includes(modelViewer) && urlGlb) {
-                    
-                    // Se estourar o limite de 2, descarrega o modelo mais antigo da memória antes de ligar o novo
-                    if (modelosAtivos.length >= MAX_MODELOS_ATIVOS) {
-                        const modeloAntigo = modelosAtivos.shift(); // Remove o primeiro da fila
-                        descarregarModeloDoWebGL(modeloAntigo);
-                    }
-
-                    // Ativa o motor 3D do modelo atual
-                    modelViewer.setAttribute('src', urlGlb);
-                    if (urlUsdz) {
-                        modelViewer.setAttribute('ios-src', `${urlUsdz}#allowsContentScaling=0`);
-                    }
-                    
-                    // Adiciona o elemento atual ao fim da fila de ativos
-                    modelosAtivos.push(modelViewer);
-                }
-            } else {
-                // Se saiu da tela, remove da fila e limpa imediatamente o WebGL
-                if (modelosAtivos.includes(modelViewer)) {
-                    modelosAtivos = modelosAtivos.filter(m => m !== modelViewer);
-                    descarregarModeloDoWebGL(modelViewer);
-                }
-            }
-        });
-    }, {
-        root: null, 
-        rootMargin: "150px 0px 150px 0px", // Margem ajustada para não pré-carregar coisas demais
-        threshold: 0.0
+    customElements.whenDefined('model-viewer').then(() => {
+        const MV = customElements.get('model-viewer');
+        if (MV) MV.modelCacheSize = 0;
     });
 
-    // Função interna crucial que força o navegador a liberar a RAM liberando o contexto WebGL
-    function descarregarModeloDoWebGL(el) {
-        if (!el) return;
-        
-        // 1. Remove os caminhos dos arquivos
-        el.removeAttribute('src');
-        el.removeAttribute('ios-src');
-        
-        // 2. Hack de performance para forçar o Three.js interno do componente a limpar o cache geométrico
-        if (typeof el.getThreeRenderer === 'function') {
-            try {
-                const renderer = el.getThreeRenderer();
-                if (renderer) renderer.info.reset();
-            } catch (e) {
-                console.warn("Erro ao resetar renderer interno:", e);
-            }
+    const MAX_MODELOS_ATIVOS = 2; // teste 1 no celular se ainda pesar
+    let modelosAtivos = [];
+    let viewerEmAR = null; // enquanto != null, ninguém é carregado/descarregado
+
+    function carregar(mv) {
+        if (modelosAtivos.includes(mv)) return;
+        const glb = mv.dataset.srcReal;
+        const usdz = mv.dataset.iosSrcReal;
+        if (!glb) return;
+
+        // Abre vaga descarregando o mais antigo
+        while (modelosAtivos.length >= MAX_MODELOS_ATIVOS) {
+            descarregar(modelosAtivos[0]);
         }
+
+        mv.setAttribute('src', glb);
+        if (usdz) mv.setAttribute('ios-src', `${usdz}#allowsContentScaling=0`);
+        modelosAtivos.push(mv);
     }
 
-    // Seleciona e observa todos os model-viewers
-    const todosOsModelos = document.querySelectorAll('model-viewer');
-    todosOsModelos.forEach(modelo => observadorAR.observe(modelo));
-}
+    function descarregar(mv) {
+        modelosAtivos = modelosAtivos.filter(m => m !== mv);
+        mv.removeAttribute('src');
+        mv.removeAttribute('ios-src');
+    }
 
+    const observador = new IntersectionObserver((entradas) => {
+        if (viewerEmAR) return; // congelado durante o AR
+        entradas.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) carregar(target);
+            else descarregar(target);
+        });
+    }, { rootMargin: '150px 0px', threshold: 0 });
 
+    function ressincronizar() {
+        // unobserve + observe força o observer a reavaliar o estado atual
+        document.querySelectorAll('model-viewer').forEach(mv => {
+            observador.unobserve(mv);
+            observador.observe(mv);
+        });
+    }
 
+    document.querySelectorAll('model-viewer').forEach(mv => {
+        // Trava já no clique, antes do evento do model-viewer chegar
+        mv.querySelector('.btn-ar')?.addEventListener('click', () => {
+            viewerEmAR = mv;
+        }, true);
 
-// Variável global para conseguir parar o Polling de qualquer lugar do código
-let intervaloPollingPix;
+        mv.addEventListener('ar-status', (e) => {
+            const status = e.detail.status;
+            console.log('[AR]', status); // útil para depurar no chrome://inspect
+            alert('[AR]', status)
 
-function verificarStatusPagamento(pedidoId) {
-    const urlCheck = `${API_PRODUCAO}/api/pedido/${pedidoId}`;
-
-    let tentativas = 0;
-    const maxTentativas = 60; // 60 tentativas * 10 segundos = 10 minutos de limite
-
-    clearInterval(intervaloPollingPix);
-
-    intervaloPollingPix = setInterval(async () => {
-        tentativas++;
-
-        if (tentativas > maxTentativas) {
-            clearInterval(intervaloPollingPix);
-            alert("O tempo para pagamento do Pix expirou. Se você já pagou, verifique com o gerente.");
-            fecharModalPagamento();
-            return;
-        }
-
-        try {
-            const resposta = await fetch(urlCheck, { method: "GET" });
-
-            if (resposta.ok) {
-                const dados = await resposta.json();
-                console.log(dados)
-
-                // 🔥 O MOMENTO DO SUCESSO: DETECTOU QUE FOI PAGO!
-                if (dados.status === 'Pago') {
-                    // 1. Para o cronômetro do Polling na hora
-                    clearInterval(intervaloPollingPix);
-
-                    // 2. Fecha a tela do QR Code do Pix
-                    fecharModalPagamento();
-
-                    // 3. Mostra o alerta de sucesso para o cliente
-                    alert("✨ Pagamento Confirmado com Sucesso! ✨\nSeu pedido foi enviado para a cozinha.");
-
-                    // 4. [CORRIGIDO]: Abre o WhatsApp enviando a mensagem contendo o texto de "PEDIDO PAGO" para a cozinha!
-                    window.open(`https://wa.me/${dados.numeroWhats}?text=${encodeURIComponent(dados.textoMensagem)}`, '_blank');
+            if (status === 'session-started') {
+                viewerEmAR = mv;
+            } else if (status === 'not-presenting' || status === 'failed') {
+                if (viewerEmAR === mv) {
+                    viewerEmAR = null;
+                    ressincronizar();
                 }
             }
-        } catch (erro) {
-            console.log("Erro ao checar status do Pix (Polling):", erro);
-        }
-    }, 10000); // Mantido o tempo de 10 segundos seguro contra o erro 429
-}
-
-
-
-////
-
-
-function atualizarStatusFuncionamento() {
-    const elementoStatus = document.getElementById('status-loja');
-    if (!elementoStatus) return;
-
-    const agora = new Date();
-    const diaSemana = agora.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
-    const hora = agora.getHours();
-    const minuto = agora.getMinutes();
-    
-    // Converte a hora atual em minutos totais desde o início do dia para facilitar o cálculo
-    // Ex: 18h30 = 18 * 60 + 30 = 1110 minutos
-    const minutosAtuais = (hora * 60) + minuto;
-
-    const inicioMinutos = 18 * 60;       // 18h00 em minutos (1080)
-    const fimMinutos = (23 * 60) + 30;   // 23h30 em minutos (1410)
-    const avisoBreveMinutos = fimMinutos - 30; // 23h00 em minutos (Falta 30 min para fechar)
-
-    // Segunda-feira (dia 1) o restaurante fecha o dia todo
-    if (diaSemana === 1) {
-        elementoStatus.innerText = "Fechado agora";
-        elementoStatus.className = "status-loja-box status-fechado";
-        return;
-    }
-
-    // Verifica se está dentro do horário de funcionamento (18h às 23h30)
-    if (minutosAtuais >= inicioMinutos && minutosAtuais < fimMinutos) {
-        // Se faltar 30 minutos ou menos para fechar (entre 23h00 e 23h30)
-        if (minutosAtuais >= avisoBreveMinutos) {
-            elementoStatus.innerText = "Fechar em breve";
-            elementoStatus.className = "status-loja-box status-breve";
-        } else {
-            // Horário normal de funcionamento
-            elementoStatus.innerText = "Aberto agora";
-            elementoStatus.className = "status-loja-box status-aberto";
-        }
-    } else {
-        // Fora do horário
-        elementoStatus.innerText = "Fechado agora";
-        elementoStatus.className = "status-loja-box status-fechado";
-    }
-}
-
-// Executa a função imediatamente ao carregar o script
-atualizarStatusFuncionamento();
-// Atualiza a cada 1 minuto caso o cliente fique com o cardápio aberto no celular
-setInterval(atualizarStatusFuncionamento, 60000);
-
-
-
-
-
-////
-
-
-
-// FUNÇÃO PARA DETECTAR E APLICAR O TEMA CORRETO
-function inicializarTema() {
-    const temaSalvo = localStorage.getItem('tema_preferido');
-    const sistemaModoEscuro = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // Se o usuário preferir dark, força a execução do bloco dark
-    if (temaSalvo === 'dark' || (!temaSalvo && sistemaModoEscuro)) {
-        document.body.classList.add('dark');
-    }
-    
-    // Roda a função uma vez para pintar as telas na cor correta de primeira
-    alternarTemaManual(); 
-    // Desfaz o toggle caso ele tenha invertido a preferência inicial
-    if (temaSalvo === 'light' || (!temaSalvo && !sistemaModoEscuro)) {
-        document.body.classList.remove('dark');
-        alternarTemaManual();
-    }
-}
-
-
-// FUNÇÃO CHAMADA AO CLICAR NO BOTÃO DO TOPO
-function alternarTemaManual() {
-    const corpoElemento = document.body;
-    const sol = document.getElementById('icone-sol');
-    const lua = document.getElementById('icone-lua');
-
-    // 1. Liga ou desliga a classe .dark do body
-    corpoElemento.classList.toggle('dark');
-
-    // 2. Coleta de elementos com seletores isolados e seguros
-    const modalContainers = document.querySelectorAll('.modal-container');
-    const inputsDigitacao = document.querySelectorAll('.campo-input-container input');
-    const opcoesEntrega = document.querySelectorAll('.opcoes-entrega');
-    const titulosModais = document.querySelectorAll('.modal-header h2, .modal-footer label');
-    const nomesPratosSacola = document.querySelectorAll('.item-carrinho-linha h4, .total-container');
-    const textosSecundarios = document.querySelectorAll('.item-carrinho-linha small, .btn-fechar');
-    
-    // Elementos laranjas isolados por ID
-    const linkAlternarAuth = document.getElementById('auth-alternar');
-    const precoTotalSacola = document.querySelector('.total-container strong');
-
-    if (corpoElemento.classList.contains('dark')) {
-        localStorage.setItem('tema_preferido', 'dark'); 
-        
-        // Ativa os displays e dispara a animação de rotação do Sol
-        if(sol) sol.style.display = 'block';
-        if(lua) lua.style.display = 'none';
-
-        // =========================================================================
-        // FORÇAR MODO ESCURO REAL (CORES DE ALTO CONTRASTE NEON)
-        // =========================================================================
-        corpoElemento.style.backgroundColor = '#0f0f11';
-        corpoElemento.style.color = '#f5f5f7';
-
-        modalContainers.forEach(el => el.style.setProperty('background-color', '#16161a', 'important'));
-        opcoesEntrega.forEach(el => el.style.setProperty('background-color', '#1c1c21', 'important'));
-        
-        inputsDigitacao.forEach(el => {
-            el.style.setProperty('background-color', '#1c1c21', 'important');
-            el.style.setProperty('color', '#f5f5f7', 'important');
-            el.style.setProperty('border-color', '#2b2b33', 'important');
         });
 
-        // Aplica o Laranja Neon nos Títulos para dar o visual futurista premium
-        titulosModais.forEach(el => el.style.setProperty('color', '#ff7a45', 'important'));
-        if(linkAlternarAuth) linkAlternarAuth.style.setProperty('color', '#ff7a45', 'important');
-        if(precoTotalSacola) precoTotalSacola.style.setProperty('color', '#ff7a45', 'important');
-
-        // Mantém os nomes dos pratos na sacola em Branco para contraste
-        nomesPratosSacola.forEach(el => el.style.setProperty('color', '#f5f5f7', 'important'));
-        textosSecundarios.forEach(el => el.style.setProperty('color', '#b3b3b3', 'important'));
-
-        // Força os labels do formulário de login se eles existirem
-        const labelsAuth = document.querySelectorAll('#form-auth label');
-        labelsAuth.forEach(el => el.style.setProperty('color', '#ff7a45', 'important'));
-
-    } else {
-        localStorage.setItem('tema_preferido', 'light');
-        
-        // Faz o Sol sumir e a Lua cair elástica do topo através do @keyframes do CSS
-        if(sol) sol.style.display = 'none';
-        if(lua) lua.style.display = 'block';
-
-        // =========================================================================
-        // RETORNAR AO MODO CLARO ORIGINAL AREIA
-        // =========================================================================
-        corpoElemento.style.backgroundColor = '#fffaf6';
-        corpoElemento.style.color = '#2c1a11';
-
-        modalContainers.forEach(el => el.style.setProperty('background-color', '#fff9f5', 'important'));
-        opcoesEntrega.forEach(el => el.style.setProperty('background-color', '#ffffff', 'important'));
-        
-        inputsDigitacao.forEach(el => {
-            el.style.setProperty('background-color', '#ffffff', 'important');
-            el.style.setProperty('color', '#2c1a11', 'important');
-            el.style.setProperty('border-color', '#ffebe0', 'important');
-        });
-
-        titulosModais.forEach(el => el.style.setProperty('color', '#2c1a11', 'important'));
-        nomesPratosSacola.forEach(el => el.style.setProperty('color', '#2c1a11', 'important'));
-        textosSecundarios.forEach(el => el.style.setProperty('color', '#6d4c41', 'important'));
-        
-        if(linkAlternarAuth) linkAlternarAuth.style.setProperty('color', '#ff5722', 'important');
-        if(precoTotalSacola) precoTotalSacola.style.setProperty('color', '#e65100', 'important');
-
-        const labelsAuth = document.querySelectorAll('#form-auth label');
-        labelsAuth.forEach(el => el.style.setProperty('color', '#6d4c41', 'important'));
-    }
+        observador.observe(mv);
+    });
 }
-
-
-
-
-// Escuta mudanças automáticas se o usuário alterar as configurações do próprio celular no meio do uso
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (!localStorage.getItem('tema_preferido')) {
-        inicializarTema();
-    }
-});
-
-// Executa automaticamente ao ler o script para o app abrir na cor certa instantaneamente
-inicializarTema();
 

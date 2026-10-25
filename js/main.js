@@ -3,7 +3,7 @@ let iconLixeira = document.getElementById("iconLixeira")
 let carrinho = [];
 let categoriaAtual = '';
 
-const API_PRODUCAO = "http://192.168.100.77:3000"//"https://cardapio-ar-backend.onrender.com";
+const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
 
 // Função Reativa que gerencia a adição e soma de itens
 function adicionarAoPedido(id, nomePrato, precoOriginal) {

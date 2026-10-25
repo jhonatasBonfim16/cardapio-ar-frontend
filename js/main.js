@@ -292,7 +292,7 @@ async function carregarCardapio() {
                         data-ios-src-real="${urlModelo3d_ios}" 
                         ar                         
                         ar-scale="fixed" 
-                        ar-modes="scene-viewer quick-look  webxr" 
+                        ar-modes="webxr  quick-look" 
                         camera-controls 
                         interaction-prompt="none" 
                         loading="lazy"

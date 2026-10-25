@@ -288,6 +288,7 @@ async function carregarCardapio() {
                 cardDiv.innerHTML = `
                     <div class="viewport-ar">
                     <model-viewer 
+                        src = "${urlModelo}"
                         data-src-real="${urlModelo}" 
                         data-ios-src-real="${urlModelo3d_ios}" 
                         ar                         
@@ -334,7 +335,7 @@ async function carregarCardapio() {
             
         });
         setTimeout(() => {
-            ativarGerenciadorDeMemoriaAR();
+          //  ativarGerenciadorDeMemoriaAR();
         }, 150);
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);

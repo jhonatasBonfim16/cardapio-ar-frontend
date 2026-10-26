@@ -327,23 +327,33 @@ async function carregarCardapio() {
                         </button>
                     </div>
                 `;
-                    
-                
+
+
                 container.appendChild(cardDiv);
             } catch (erroItem) {
                 console.error("Erro ao renderizar item:", erroItem);
             }
-            
+
         });
         setTimeout(() => {
-          //  ativarGerenciadorDeMemoriaAR();
+            //  ativarGerenciadorDeMemoriaAR();
         }, 150);
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);
     }
 }
+document.querySelectorAll('model-viewer').forEach(viewer => {
+    viewer.addEventListener('ar-status', (event) => {
+        console.log("Status AR:", event.detail.status);
+        if (event.detail.status === 'failed') {
+            alert("O AR falhou por este motivo: " + event.detail.failureReason);
+        }
+    });
+});
+
 
 carregarCardapio();
+/*
 function ativarGerenciadorDeMemoriaAR() {
     customElements.whenDefined('model-viewer').then(() => {
         const MV = customElements.get('model-viewer');
@@ -415,4 +425,4 @@ function ativarGerenciadorDeMemoriaAR() {
         observador.observe(mv);
     });
 }
-
+*/

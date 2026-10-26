@@ -1,27 +1,24 @@
-
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* ========== BASE ========== */
+:root {
+    --cor-fundo-card: #ffffff;
+    --cor-fundo-caixas: #ffffff;
+    --cor-bordas: #ffebe0;
+    --cor-texto-principal: #2c1a11;
+    --cor-texto-secundario: #6d4c41;
+    --laranja: #ff5722;
 }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #fff9f5;
-    /* Fundo levemente pêssego/quente */
     color: #2c1a11;
-    /* Texto marrom escuro acolhedor */
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Esconde o botão padrão nativo do model-viewer */
-model-viewer::part(default-ar-button) {
-    display: none;
-}
-
-/* ESTRUTURA DO TOPO FIXO (HEADER + CATEGORIAS) */
+/* ========== TOPO FIXO ========== */
 .topo-fixo {
     position: sticky;
     top: 0;
@@ -32,44 +29,30 @@ model-viewer::part(default-ar-button) {
     border-bottom: 2px solid #ffebe0;
 }
 
-/* HEADER PRINCIPAL */
 header {
-    padding: 16px 24px 10px 24px;
+    padding: 16px 24px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-header h1 {
-    font-size: 22px;
-    font-weight: 800;
-    color: #ff5722;
-    /* Laranja Ativo */
-    letter-spacing: -0.02em;
-}
+header h1 { font-size: 22px; font-weight: 800; color: var(--laranja); letter-spacing: -0.02em; }
+header h1 span { color: #ffb300; }
 
-header h1 span {
-    color: #ffb300;
-    /* Amarelo Gema */
-}
-
-/* BARRA DE CATEGORIAS ROLÁVEL (ESTILO IFOOD) */
+/* ========== CATEGORIAS ========== */
 .menu-categorias {
     display: flex;
     gap: 12px;
-    padding: 0 24px 14px 24px;
+    padding: 0 24px 14px;
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
-
-/* Ocultar a barra de rolagem visualmente para ficar mais limpo */
-.menu-categorias::-webkit-scrollbar {
-    display: none;
-}
+.menu-categorias::-webkit-scrollbar { display: none; }
 
 .categoria-item {
-    background-color: #ffffff;
+    background-color: #fff;
     color: #6d4c41;
     border: 2px solid #ffebe0;
     padding: 8px 16px;
@@ -77,206 +60,173 @@ header h1 span {
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
-
-/* Classe para destacar a categoria selecionada */
 .categoria-item.ativo {
-    background-color: #ff5722;
-    color: #ffffff;
-    border-color: #ff5722;
+    background-color: var(--laranja);
+    color: #fff;
+    border-color: var(--laranja);
     box-shadow: 0 4px 10px rgba(255, 87, 34, 0.2);
 }
 
-/* BOTÃO DO CARRINHO VIBRANTE */
-.carrinho-topo {
+/* ========== BOTÕES DO TOPO (CARRINHO E TEMA) ========== */
+.carrinho-topo,
+#btn-tema {
     position: relative;
-    background-color: #ff5722;
-    padding: 12px;
-    border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
     border: none;
+    border-radius: 50%;
     cursor: pointer;
+}
+
+.carrinho-topo {
+    background-color: var(--laranja);
     box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
     transition: transform 0.2s;
 }
+.carrinho-topo:active { transform: scale(0.92); }
+.icone-sacola { width: 20px; height: 20px; stroke: #fff; }
 
-.carrinho-topo:active {
-    transform: scale(0.92);
+#btn-tema { overflow: hidden; }
+#btn-tema svg { width: 22px; height: 22px; }
+
+.icone-tema { transition: all 0.3s ease; transform-origin: center; }
+#btn-tema #icone-lua { animation: cairIcone 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+#btn-tema #icone-sol { animation: girarBrilho 0.4s ease-out forwards; }
+
+@keyframes cairIcone {
+    0%   { transform: translateY(-40px) scale(0.5); opacity: 0; }
+    70%  { transform: translateY(4px) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); }
+}
+@keyframes girarBrilho {
+    0%   { transform: rotate(-90deg) scale(0.2); opacity: 0; }
+    100% { transform: rotate(0) scale(1); opacity: 1; }
 }
 
-.icone-sacola {
-    width: 20px;
-    height: 20px;
-    stroke: #ffffff;
-    /* Sacola Branca */
-}
-
-/* BADGE DO CONTADOR DO CARRINHO */
 #contador-carrinho {
     position: absolute;
     top: -4px;
     right: -4px;
-    background-color: #ffb300;
-    color: #2c1a11;
-    font-size: 11px;
-    font-weight: 800;
     width: 18px;
     height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: #ffb300;
+    color: #2c1a11;
+    font-size: 11px;
+    font-weight: 800;
     border-radius: 50%;
     border: 2px solid #fff9f5;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     opacity: 0;
     transform: scale(0.5);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
 }
+#contador-carrinho.visivel { opacity: 1; transform: scale(1); }
+#contador-carrinho.pulso   { transform: scale(1.4); }
 
-#contador-carrinho.visivel {
-    opacity: 1;
-    transform: scale(1);
-}
-
-#contador-carrinho.pulso {
-    transform: scale(1.4);
-}
-
-/* CONTAINER CENTRAL */
+/* ========== CONTAINER ========== */
 main {
     max-width: 450px;
     margin: 0 auto;
-    padding: 24px 20px;
-    padding-bottom: 40px !important;
+    padding: 24px 20px 40px;
 }
 
-/* CARDS DOS PRATOS (INTELIGENTE: ADAPTA-SE AUTOMATICAMENTE AO TEMA) */
+/* ========== CARD ========== */
 .card {
-    background-color: var(--cor-fundo-card) !important;
-    /* Branco no claro, Grafite no escuro */
+    background-color: var(--cor-fundo-card);
+    border: 2px solid var(--cor-bordas);
     border-radius: 28px;
     overflow: hidden;
-    border: 2px solid var(--cor-bordas) !important;
-    /* Linha sutil clara ou escura */
     box-shadow: 0 12px 30px rgba(255, 87, 34, 0.04);
     margin-bottom: 28px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.3s, border-color 0.3s;
 }
 
-/* VIEWPORT DO MOTOR 3D CORRIGIDA */
-/* VIEWPORT DO MOTOR 3D CORRIGIDA (Cria a moldura perfeitamente casada) */
+/* ========== ÁREA 3D ========== */
 .viewport-ar {
     position: relative;
     width: 100%;
     height: 280px;
-    /* [CORRIGIDO]: Usa a mesma cor do card para sumir com vazamentos de fundo */
-    background-color: var(--cor-fundo-card) !important;
-    /* [CORRIGIDO]: Igualado ao raio de curvatura do card para casar as quinas */
-    border-radius: 28px 28px 0 0;
-    overflow: hidden;
-    /* Corta rigidamente qualquer pixel que tente vazar */
-    transition: background-color 0.3s ease;
-    
+    background-color: var(--cor-fundo-card);
+    overflow: hidden; /* arredonda as quinas do viewer e da foto */
 }
 
-/* GARANTE QUE O MOTOR OCUPE 100% DO TAMANHO DO CARD */
-model-viewer {
-    width: 100%;
-    height: 100%;
-    display: block;
-    position: relative;
-    background-color: var(--cor-fundo-card) !important;
-    /* [CORRIGIDO]: Acompanha o desenho curvado do topo do card */
-    border-radius: 28px 28px 0 0 !important;
-    transition: background-color 0.3s ease;
-}
-
-/* CONFIGURAÇÃO DA CAIXA DO PROJETOR DE MODELO 3D (UNIFICADO) */
-.viewport-ar model-viewer {
-    width: 100%;
-    height: 100%;
-    background-color: var(--cor-fundo-card) !important;
-    /* [CORRIGIDO]: Garante que o seletor composto mantenha as quinas perfeitas */
-    border-radius: 28px 28px 0 0 !important;
-    transition: background-color 0.3s ease;
-}
-
-/* Garante que a foto ocupe o mesmo espaço do motor 3D se for acionada */
+/* Foto do prato: o que aparece por padrão */
+.viewport-ar > img,
 .foto-fallback {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 3; /* Fica acima do canvas caso o 3D quebre */
-    border-radius: 28px 28px 0 0;
-    transition: opacity 0.3s ease;
 }
 
-/* Oculta a foto por padrão para quem tem internet normal */
-.ocultar-fallback {
-    opacity: 0;
-    pointer-events: none;
+/* Botão "Ver em 3D" sobre a foto */
+.btn-3d {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 5;
+    background-color: var(--cor-fundo-caixas);
+    color: var(--laranja);
+    border: 2px solid var(--laranja);
+    padding: 10px 16px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
 }
 
-.viewport-ar, model-viewer {
+/* Quando o 3D está ativo: esconde foto e botão */
+.viewport-ar.ativo > img,
+.viewport-ar.ativo > .btn-3d { display: none; }
+
+/* Viewer 3D */
+model-viewer {
     display: block;
     width: 100%;
-    height: 300px; /* Defina uma altura mínima obrigatória */
-    min-height: 250px;
+    height: 100%;
+    background-color: var(--cor-fundo-card);
+    --poster-color: transparent;
 }
 
+/* Esconde o botão de AR padrão do model-viewer */
+model-viewer::part(default-ar-button) { display: none; }
 
-
-
-/* PÍLULA DE REALIDADE AUMENTADA CORRIGIDA (Cravada no canto inferior direito) */
+/* Botão de AR personalizado (slot="ar-button") */
 .btn-ar {
     position: absolute;
     bottom: 16px;
     right: 16px;
     z-index: 10;
-    /* Fica sobreposto ao modelo 3D sem sumir */
-    background-color: var(--cor-fundo-caixas) !important;
-    /* Branco no claro, Cinza escuro no dark */
-    color: #ff5722;
-    border: 2px solid #ff5722;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--cor-fundo-caixas);
+    color: var(--laranja);
+    border: 2px solid var(--laranja);
     padding: 10px 16px;
     border-radius: 30px;
     font-weight: 700;
     font-size: 12px;
-    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
+    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
+    transition: transform 0.2s, background-color 0.2s, color 0.2s;
 }
+.btn-ar:active { transform: scale(0.95); background-color: var(--laranja); color: #fff; }
+.btn-ar svg { width: 14px; height: 14px; }
 
-.btn-ar:active {
-    transform: scale(0.95);
-    background-color: #ff5722 !important;
-    color: #ffffff;
-}
-
-.btn-ar svg {
-    width: 14px;
-    height: 14px;
-}
-
-
-
-
-
-
-
-/* DETALHES INTERNOS DO CARD */
-.card-detalhes {
-    padding: 20px 24px 24px 24px;
-}
+/* ========== DETALHES DO CARD ========== */
+.card-detalhes { padding: 20px 24px 24px; }
 
 .card-header {
     display: flex;
@@ -289,40 +239,33 @@ model-viewer {
 .card-header h2 {
     font-size: 20px;
     font-weight: 700;
-    color: var(--cor-texto-principal) !important;
-    /* Dinâmico: Marrom no claro, Branco no dark */
-    margin: 0;
-    transition: color 0.3s ease;
+    color: var(--cor-texto-principal);
+    transition: color 0.3s;
 }
 
 .card-header p {
     font-size: 13px;
-    color: var(--cor-texto-secundario) !important;
-    /* Dinâmico: Marrom médio ou Cinza claro */
+    color: var(--cor-texto-secundario);
     line-height: 1.4;
     margin-top: 4px;
-    font-weight: 400;
-    transition: color 0.3s ease;
+    transition: color 0.3s;
 }
 
-/* PREÇO ESTILO DELIVERY APP */
 .preco {
     font-size: 15px;
     font-weight: 700;
-    color: #ffffff;
+    color: #fff;
     background-color: #e65100;
-    /* Laranja Escuro estável */
     padding: 6px 14px;
     border-radius: 14px;
     white-space: nowrap;
     box-shadow: 0 4px 10px rgba(230, 81, 0, 0.2);
 }
 
-/* BOTÃO ADICIONAR COM CORES QUENTES */
 .btn-adicionar {
     width: 100%;
-    background-color: #ff5722;
-    color: #ffffff;
+    background-color: var(--laranja);
+    color: #fff;
     border: none;
     font-weight: 700;
     font-size: 14px;
@@ -332,109 +275,52 @@ model-viewer {
     box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
     transition: background-color 0.2s, transform 0.1s;
 }
+.btn-adicionar:hover  { background-color: #f4511e; }
+.btn-adicionar:active { transform: scale(0.98); box-shadow: 0 3px 10px rgba(255, 87, 34, 0.2); }
 
-.btn-adicionar:hover {
-    background-color: #f4511e;
-}
-
-.btn-adicionar:active {
-    transform: scale(0.98);
-    box-shadow: 0 3px 10px rgba(255, 87, 34, 0.2);
-}
-
-
-
-
-
-/* DESIGN DE RODAPÉ DARK PREMIUM */
-/* DESIGN DE RODAPÉ PREMIUM TRAVADO NO MODO DARK */
+/* ========== RODAPÉ ========== */
 .rodape-premium {
-    background-color: #121214 !important;
-    /* Chumbo Premium Fixo */
-    border-top: 1px solid #202024 !important;
-    /* Linha Discreta Fixa */
-    padding: 45px 24px 24px 24px;
+    background-color: #121214;
+    border-top: 1px solid #202024;
+    padding: 45px 24px 24px;
     margin-top: 60px;
 }
+.rodape-container { max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
 
-.rodape-container {
-    max-width: 450px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-}
-
-.rodape-subtitulo-dark {
-    font-size: 13px !important;
-    color: #a8a8b3 !important;
-    /* Texto cinza claro fixo */
-    margin: 0 0 12px 0;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.rodape-marca-dark {
-    font-size: 22px;
-    color: #ff5722;
-    /* Laranja da sua marca */
-    margin: 0 0 8px 0;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-}
-
-.rodape-marca-dark span {
-    color: #ffffff !important;
-    /* Branco Fixo */
-    font-weight: 300;
-}
-
-.rodape-texto-dark {
-    font-size: 13px;
-    color: #7c7c8a !important;
-    /* Cinza intermediário estável */
-    line-height: 1.6;
-    margin: 0 0 16px 0;
-}
+.rodape-subtitulo-dark { font-size: 13px; color: #a8a8b3; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.rodape-marca-dark { font-size: 22px; color: var(--laranja); margin-bottom: 8px; font-weight: 800; letter-spacing: -0.5px; }
+.rodape-marca-dark span { color: #fff; font-weight: 300; }
+.rodape-texto-dark { font-size: 13px; color: #7c7c8a; line-height: 1.6; margin-bottom: 16px; }
 
 .rodape-status-hora-dark {
     display: inline-block;
     font-size: 12px;
-    background-color: #1a1a1e !important;
-    color: #e1e1e6 !important;
+    background-color: #1a1a1e;
+    color: #e1e1e6;
     padding: 8px 16px;
     border-radius: 20px;
-    border: 1px solid #29292e !important;
+    border: 1px solid #29292e;
     font-weight: 600;
 }
 
-.rodape-sociais-dark {
-    display: flex;
-    gap: 12px;
-}
-
+.rodape-sociais-dark { display: flex; gap: 12px; }
 .rodape-sociais-dark a {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
-    background-color: #1a1a1e !important;
-    border: 1px solid #29292e !important;
+    background-color: #1a1a1e;
+    border: 1px solid #29292e;
     border-radius: 50%;
-    color: #ff5722;
-    transition: all 0.3s ease;
+    color: var(--laranja);
+    transition: all 0.3s;
 }
-
-.rodape-sociais-dark a svg {
-    width: 18px;
-    height: 18px;
-}
-
+.rodape-sociais-dark a svg { width: 18px; height: 18px; }
 .rodape-sociais-dark a:hover {
-    background-color: #ff5722 !important;
-    color: #ffffff !important;
-    border-color: #ff5722 !important;
+    background-color: var(--laranja);
+    color: #fff;
+    border-color: var(--laranja);
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(255, 87, 34, 0.2);
 }
@@ -443,44 +329,27 @@ model-viewer {
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: #1a1a1e !important;
+    background-color: #1a1a1e;
     padding: 12px 16px;
     border-radius: 14px;
-    border: 1px solid #29292e !important;
-    color: #a8a8b3 !important;
+    border: 1px solid #29292e;
+    color: #a8a8b3;
     font-size: 12px;
     font-weight: 500;
 }
-
-.selo-seguro-dark svg {
-    width: 16px;
-    height: 16px;
-    color: #04d361;
-}
+.selo-seguro-dark svg { width: 16px; height: 16px; color: #04d361; }
 
 .rodape-linha-final-dark {
     max-width: 450px;
-    margin: 35px auto 0 auto;
-    border-top: 1px solid #202024 !important;
+    margin: 35px auto 0;
+    border-top: 1px solid #202024;
     padding-top: 20px;
     text-align: center;
 }
+.rodape-linha-final-dark p { font-size: 11px; color: #62626c; }
 
-.rodape-linha-final-dark p {
-    font-size: 11px;
-    color: #62626c !important;
-    margin: 0;
-}
-
-
-
-/* CONTAINER E CAIXINHA DE STATUS DINÂMICO */
-.rodape-status-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-}
+/* ========== STATUS DA LOJA ========== */
+.rodape-status-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
 .status-loja-box {
     display: inline-block;
@@ -490,110 +359,8 @@ model-viewer {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
-
-/* Estado: Aberto (Verde) */
-.status-aberto {
-    background-color: rgba(4, 211, 97, 0.1);
-    color: #04d361;
-    border: 1px solid rgba(4, 211, 97, 0.3);
-    box-shadow: 0 0 12px rgba(4, 211, 97, 0.15);
-}
-
-/* Estado: Fecha em Breve (Amarelo) */
-.status-breve {
-    background-color: rgba(255, 204, 0, 0.1);
-    color: #ffcc00;
-    border: 1px solid rgba(255, 204, 0, 0.3);
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.15);
-}
-
-/* Estado: Fechado (Cinza/Vermelho suave) */
-.status-fechado {
-    background-color: rgba(255, 71, 87, 0.1);
-    color: #ff4757;
-    border: 1px solid rgba(255, 71, 87, 0.3);
-}
-
-/* ALINHAMENTO MATEMÁTICO CENTRAL DO BOTÃO DE TEMA */
-#btn-tema {
-    position: relative !important;
-    display: inline-block !important;
-    width: 44px !important;  /* Ajuste para bater exatamente com o tamanho do seu botão de carrinho */
-    height: 44px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border-radius: 50%;     /* Garante que o fundo seja um círculo perfeito */
-    overflow: hidden;
-}
-
-/* Força os ícones do Sol e da Lua a ficarem cravados no centro exato do botão */
-#btn-tema svg {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important; /* Desloca o ícone de volta metade do seu próprio tamanho */
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 22px !important;  /* Garante o tamanho padrão do ícone */
-    height: 22px !important;
-}
-
-/* =========================================================================
-   CONSERTO DE VETOR E ANIMAÇÃO DE ENTRADA (SOL / LUA)
-   ========================================================================= */
-
-/* Alinhamento geral estável do botão */
-#btn-tema {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: relative !important;
-    overflow: hidden !important; /* Esconde o ícone antes de ele cair para dentro do botão */
-    width: 44px !important;
-    height: 44px !important;
-}
-
-/* Base de transição para os ícones */
-.icone-tema {
-    transition: all 0.3s ease;
-    transform-origin: center center;
-}
-
-/* Animação para a Lua surgir caindo do topo */
-#btn-tema #icone-lua {
-    animation: cairIcone 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* Animação para o Sol surgir girando com brilho */
-#btn-tema #icone-sol {
-    animation: girarBrilho 0.4s ease-out forwards;
-}
-
-/* EFEITO 1: Caindo do Topo com efeito Elástico (Bounce) */
-@keyframes cairIcone {
-    0% {
-        transform: translateY(-40px) scale(0.5);
-        opacity: 0;
-    }
-    70% {
-        transform: translateY(4px) scale(1.05); /* Passa um pouquinho do centro */
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(0) scale(1); /* Trava no centro perfeito */
-    }
-}
-
-/* EFEITO 2: Giro de Transição para o Sol */
-@keyframes girarBrilho {
-    0% {
-        transform: rotate(-90deg) scale(0.2);
-        opacity: 0;
-    }
-    100% {
-        transform: rotate(0deg) scale(1);
-        opacity: 1;
-    }
-}
+.status-aberto  { background: rgba(4, 211, 97, 0.1);  color: #04d361; border: 1px solid rgba(4, 211, 97, 0.3);  box-shadow: 0 0 12px rgba(4, 211, 97, 0.15); }
+.status-breve   { background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); box-shadow: 0 0 12px rgba(255, 204, 0, 0.15); }
+.status-fechado { background: rgba(255, 71, 87, 0.1); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }

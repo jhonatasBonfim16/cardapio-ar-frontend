@@ -292,13 +292,14 @@ async function carregarCardapio() {
                         data-src-real="${urlModelo}" 
                         data-ios-src-real="${urlModelo3d_ios}" 
                         ar                         
-                        ar-scale="fixed" 
+                        ar-scale="auto" 
                         ar-modes="webxr  quick-look" 
                         camera-controls 
                         interaction-prompt="none" 
                         loading="lazy"
                         touch-action="pan-y"
                         shadow-intensity="1"
+                        shadow-softness="1"
                         exposure="1.2"
                         alt="Modelo 3D de ${nome}">
 

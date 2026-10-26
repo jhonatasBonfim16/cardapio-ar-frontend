@@ -336,7 +336,7 @@ async function carregarCardapio() {
 
         });
         setTimeout(() => {
-            //  ativarGerenciadorDeMemoriaAR();
+            ativarGerenciadorDeMemoriaAR();
         }, 150);
     } catch (erro) {
         console.error("Erro na conexão com o servidor:", erro);
@@ -353,7 +353,7 @@ document.querySelectorAll('model-viewer').forEach(viewer => {
 
 
 carregarCardapio();
-/*
+
 function ativarGerenciadorDeMemoriaAR() {
     customElements.whenDefined('model-viewer').then(() => {
         const MV = customElements.get('model-viewer');
@@ -425,4 +425,4 @@ function ativarGerenciadorDeMemoriaAR() {
         observador.observe(mv);
     });
 }
-*/
+

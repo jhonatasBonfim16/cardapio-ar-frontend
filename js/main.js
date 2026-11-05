@@ -393,7 +393,14 @@ async function carregarCardapio() {
 
         // Congela a troca de modelos enquanto a sessão de AR estiver aberta
         // (captura, porque o evento ar-status não sobe pelo DOM)
-http://192.168.100.77:3000
+        container.addEventListener('ar-status', (e) => {
+            const status = e.detail.status;
+            if (status === 'session-started') {
+                viewerEmAR = e.target;
+            } else if (status === 'not-presenting' || status === 'failed') {
+                viewerEmAR = null;
+            }
+        }, true);
     } catch (e) {
         console.error('Erro na conexão com o servidor:', e);
     }

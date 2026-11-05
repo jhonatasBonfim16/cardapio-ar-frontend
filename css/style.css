@@ -1,268 +1,366 @@
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+/* ========== BASE ========== */
+:root {
+    --cor-fundo-card: #ffffff;
+    --cor-fundo-caixas: #ffffff;
+    --cor-bordas: #ffebe0;
+    --cor-texto-principal: #2c1a11;
+    --cor-texto-secundario: #6d4c41;
+    --laranja: #ff5722;
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #fff9f5; /* Fundo levemente pêssego/quente */
-            color: #2c1a11; /* Texto marrom escuro acolhedor */
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Esconde o botão padrão nativo do model-viewer */
-        model-viewer::part(default-ar-button) {
-            display: none;
-        }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #fff9f5;
+    color: #2c1a11;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
 
-        /* ESTRUTURA DO TOPO FIXO (HEADER + CATEGORIAS) */
-        .topo-fixo {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background-color: rgba(255, 250, 245, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 2px solid #ffebe0;
-        }
+/* ========== TOPO FIXO ========== */
+.topo-fixo {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: rgba(255, 250, 245, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 2px solid #ffebe0;
+}
 
-        /* HEADER PRINCIPAL */
-        header {
-            padding: 16px 24px 10px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+header {
+    padding: 16px 24px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        header h1 {
-            font-size: 22px;
-            font-weight: 800;
-            color: #ff5722; /* Laranja Ativo */
-            letter-spacing: -0.02em;
-        }
+header h1 { font-size: 22px; font-weight: 800; color: var(--laranja); letter-spacing: -0.02em; }
+header h1 span { color: #ffb300; }
 
-        header h1 span {
-            color: #ffb300; /* Amarelo Gema */
-        }
+/* ========== CATEGORIAS ========== */
+.menu-categorias {
+    display: flex;
+    gap: 12px;
+    padding: 0 24px 14px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.menu-categorias::-webkit-scrollbar { display: none; }
 
-        /* BARRA DE CATEGORIAS ROLÁVEL (ESTILO IFOOD) */
-        .menu-categorias {
-            display: flex;
-            gap: 12px;
-            padding: 0 24px 14px 24px;
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-        }
+.categoria-item {
+    background-color: #fff;
+    color: #6d4c41;
+    border: 2px solid #ffebe0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.categoria-item.ativo {
+    background-color: var(--laranja);
+    color: #fff;
+    border-color: var(--laranja);
+    box-shadow: 0 4px 10px rgba(255, 87, 34, 0.2);
+}
 
-        /* Ocultar a barra de rolagem visualmente para ficar mais limpo */
-        .menu-categorias::-webkit-scrollbar {
-            display: none;
-        }
+/* ========== BOTÕES DO TOPO (CARRINHO E TEMA) ========== */
+.carrinho-topo,
+#btn-tema {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
 
-        .categoria-item {
-            background-color: #ffffff;
-            color: #6d4c41;
-            border: 2px solid #ffebe0;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+.carrinho-topo {
+    background-color: var(--laranja);
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
+    transition: transform 0.2s;
+}
+.carrinho-topo:active { transform: scale(0.92); }
+.icone-sacola { width: 20px; height: 20px; stroke: #fff; }
 
-        /* Classe para destacar a categoria selecionada */
-        .categoria-item.ativo {
-            background-color: #ff5722;
-            color: #ffffff;
-            border-color: #ff5722;
-            box-shadow: 0 4px 10px rgba(255, 87, 34, 0.2);
-        }
+#btn-tema { overflow: hidden; }
+#btn-tema svg { width: 22px; height: 22px; }
 
-        /* BOTÃO DO CARRINHO VIBRANTE */
-        .carrinho-topo {
-            position: relative;
-            background-color: #ff5722;
-            padding: 12px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
-            transition: transform 0.2s;
-        }
+.icone-tema { transition: all 0.3s ease; transform-origin: center; }
+#btn-tema #icone-lua { animation: cairIcone 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+#btn-tema #icone-sol { animation: girarBrilho 0.4s ease-out forwards; }
 
-        .carrinho-topo:active {
-            transform: scale(0.92);
-        }
+@keyframes cairIcone {
+    0%   { transform: translateY(-40px) scale(0.5); opacity: 0; }
+    70%  { transform: translateY(4px) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); }
+}
+@keyframes girarBrilho {
+    0%   { transform: rotate(-90deg) scale(0.2); opacity: 0; }
+    100% { transform: rotate(0) scale(1); opacity: 1; }
+}
 
-        .icone-sacola {
-            width: 20px;
-            height: 20px;
-            stroke: #ffffff; /* Sacola Branca */
-        }
+#contador-carrinho {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffb300;
+    color: #2c1a11;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 50%;
+    border: 2px solid #fff9f5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s;
+}
+#contador-carrinho.visivel { opacity: 1; transform: scale(1); }
+#contador-carrinho.pulso   { transform: scale(1.4); }
 
-        /* BADGE DO CONTADOR DO CARRINHO */
-        #contador-carrinho {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background-color: #ffb300;
-            color: #2c1a11;
-            font-size: 11px;
-            font-weight: 800;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            border: 2px solid #fff9f5;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            opacity: 0;
-            transform: scale(0.5);
-        }
+/* ========== CONTAINER ========== */
+main {
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+}
 
-        #contador-carrinho.visivel {
-            opacity: 1;
-            transform: scale(1);
-        }
+/* ========== CARD ========== */
+.card {
+    background-color: var(--cor-fundo-card);
+    border: 2px solid var(--cor-bordas);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(255, 87, 34, 0.04);
+    margin-bottom: 28px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
 
-        #contador-carrinho.pulso {
-            transform: scale(1.4);
-        }
+/* ========== ÁREA 3D ========== */
+.viewport-ar {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    background-color: var(--cor-fundo-card);
+    overflow: hidden; /* arredonda as quinas do viewer e da foto */
+}
 
-        /* CONTAINER CENTRAL */
-        main {
-            max-width: 450px;
-            margin: 0 auto;
-            padding: 24px 20px;
-        }
+/* Foto do prato: o que aparece por padrão */
+.viewport-ar > img,
+.foto-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-        /* CARDS DOS PRATOS */
-        .card {
-            background-color: #ffffff;
-            border-radius: 28px;
-            overflow: hidden;
-            border: 2px solid #ffebe0;
-            box-shadow: 0 12px 30px rgba(255, 87, 34, 0.04);
-            margin-bottom: 28px;
-        }
+/* Botão "Ver em 3D" sobre a foto */
+.btn-3d {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 5;
+    background-color: var(--cor-fundo-caixas);
+    color: var(--laranja);
+    border: 2px solid var(--laranja);
+    padding: 10px 16px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
+}
 
-        /* VIEWPORT DO MOTOR 3D CORRIGIDA (Cria a âncora rígida de posicionamento) */
-        .viewport-ar {
-            position: relative;
-            width: 100%;
-            height: 280px;
-            background-color: #fff3ed; /* Fundo quente para o 3D */
-            overflow: hidden; /* Corta vazamentos visuais */
-        }
+/* Quando o 3D está ativo: esconde foto e botão */
+.viewport-ar.ativo > img,
+.viewport-ar.ativo > .btn-3d { display: none; }
 
-        /* GARANTE QUE O MOTOR OCUPE 100% DO TAMANHO DO CARD */
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            display: block;
-            position: relative;
-        }
+/* Viewer 3D */
+model-viewer {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--cor-fundo-card);
+    --poster-color: transparent;
+}
 
-        /* PÍLULA DE REALIDADE AUMENTADA CORRIGIDA (Cravada no canto inferior direito) */
-        .btn-ar {
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
-            z-index: 10; /* Fica sobreposto ao modelo 3D sem sumir */
-            background-color: #ffffff;
-            color: #ff5722;
-            border: 2px solid #ff5722;
-            padding: 10px 16px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 12px;
-            box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
+/* Esconde o botão de AR padrão do model-viewer */
+model-viewer::part(default-ar-button) { display: none; }
 
-        .btn-ar:active {
-            transform: scale(0.95);
-            background-color: #ff5722;
-            color: #ffffff;
-        }
+/* Botão de AR personalizado (slot="ar-button") */
+.btn-ar {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--cor-fundo-caixas);
+    color: var(--laranja);
+    border: 2px solid var(--laranja);
+    padding: 10px 16px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.15);
+    transition: transform 0.2s, background-color 0.2s, color 0.2s;
+}
+.btn-ar:active { transform: scale(0.95); background-color: var(--laranja); color: #fff; }
+.btn-ar svg { width: 14px; height: 14px; }
 
-        .btn-ar svg {
-            width: 14px;
-            height: 14px;
-        }
+/* ========== DETALHES DO CARD ========== */
+.card-detalhes { padding: 20px 24px 24px; }
 
-        /* DETALHES INTERNOS DO CARD */
-        .card-detalhes {
-            padding: 20px 24px 24px 24px;
-        }
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+.card-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+    transition: color 0.3s;
+}
 
-        .card-header h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2c1a11;
-        }
+.card-header p {
+    font-size: 13px;
+    color: var(--cor-texto-secundario);
+    line-height: 1.4;
+    margin-top: 4px;
+    transition: color 0.3s;
+}
 
-        .card-header p {
-            font-size: 13px;
-            color: #6d4c41;
-            line-height: 1.4;
-            margin-top: 4px;
-            font-weight: 400;
-        }
+.preco {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background-color: #e65100;
+    padding: 6px 14px;
+    border-radius: 14px;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(230, 81, 0, 0.2);
+}
 
-        /* PREÇO ESTILO DELIVERY APP */
-        .preco {
-            font-size: 15px;
-            font-weight: 700;
-            color: #ffffff;
-            background-color: #e65100; /* Laranja Escuro */
-            padding: 6px 14px;
-            border-radius: 14px;
-            white-space: nowrap;
-            box-shadow: 0 4px 10px rgba(230, 81, 0, 0.2);
-        }
+.btn-adicionar {
+    width: 100%;
+    background-color: var(--laranja);
+    color: #fff;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 16px;
+    border-radius: 18px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
+    transition: background-color 0.2s, transform 0.1s;
+}
+.btn-adicionar:hover  { background-color: #f4511e; }
+.btn-adicionar:active { transform: scale(0.98); box-shadow: 0 3px 10px rgba(255, 87, 34, 0.2); }
 
-        /* BOTÃO ADICIONAR COM CORES QUENTES */
-        .btn-adicionar {
-            width: 100%;
-            background-color: #ff5722;
-            color: #ffffff;
-            border: none;
-            font-weight: 700;
-            font-size: 14px;
-            padding: 16px;
-            border-radius: 18px;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.3);
-            transition: background-color 0.2s, transform 0.1s;
-        }
+/* ========== RODAPÉ ========== */
+.rodape-premium {
+    background-color: #121214;
+    border-top: 1px solid #202024;
+    padding: 45px 24px 24px;
+    margin-top: 60px;
+}
+.rodape-container { max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
 
-        .btn-adicionar:hover {
-            background-color: #f4511e;
-        }
+.rodape-subtitulo-dark { font-size: 13px; color: #a8a8b3; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.rodape-marca-dark { font-size: 22px; color: var(--laranja); margin-bottom: 8px; font-weight: 800; letter-spacing: -0.5px; }
+.rodape-marca-dark span { color: #fff; font-weight: 300; }
+.rodape-texto-dark { font-size: 13px; color: #7c7c8a; line-height: 1.6; margin-bottom: 16px; }
 
-        .btn-adicionar:active {
-            transform: scale(0.98);
-            box-shadow: 0 3px 10px rgba(255, 87, 34, 0.2);
-        }
+.rodape-status-hora-dark {
+    display: inline-block;
+    font-size: 12px;
+    background-color: #1a1a1e;
+    color: #e1e1e6;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #29292e;
+    font-weight: 600;
+}
+
+.rodape-sociais-dark { display: flex; gap: 12px; }
+.rodape-sociais-dark a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #1a1a1e;
+    border: 1px solid #29292e;
+    border-radius: 50%;
+    color: var(--laranja);
+    transition: all 0.3s;
+}
+.rodape-sociais-dark a svg { width: 18px; height: 18px; }
+.rodape-sociais-dark a:hover {
+    background-color: var(--laranja);
+    color: #fff;
+    border-color: var(--laranja);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 87, 34, 0.2);
+}
+
+.selo-seguro-dark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #1a1a1e;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid #29292e;
+    color: #a8a8b3;
+    font-size: 12px;
+    font-weight: 500;
+}
+.selo-seguro-dark svg { width: 16px; height: 16px; color: #04d361; }
+
+.rodape-linha-final-dark {
+    max-width: 450px;
+    margin: 35px auto 0;
+    border-top: 1px solid #202024;
+    padding-top: 20px;
+    text-align: center;
+}
+.rodape-linha-final-dark p { font-size: 11px; color: #62626c; }
+
+/* ========== STATUS DA LOJA ========== */
+.rodape-status-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.status-loja-box {
+    display: inline-block;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+}
+.status-aberto  { background: rgba(4, 211, 97, 0.1);  color: #04d361; border: 1px solid rgba(4, 211, 97, 0.3);  box-shadow: 0 0 12px rgba(4, 211, 97, 0.15); }
+.status-breve   { background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); box-shadow: 0 0 12px rgba(255, 204, 0, 0.15); }
+.status-fechado { background: rgba(255, 71, 87, 0.1); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }

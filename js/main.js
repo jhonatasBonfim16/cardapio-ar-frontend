@@ -132,7 +132,7 @@ function higienizarEntrada(texto) {
 }
 
 // Envio Inteligente do Pedido Final (Seu código atualizado) colocar no backend.
-function enviarPedidoFinal() {
+async function enviarPedidoFinal() {
     if (carrinho.length === 0) {
         alert("Sua sacola está vazia!");
         return;

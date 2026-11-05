@@ -242,179 +242,142 @@ function alternarCategoria(elemento, categoria) {
     carregarCardapio(); // Re-chama o fetch aplicando a rota filtrada no Postgres
 }
 
-async function carregarCardapio() {
-    try {
-        const API_PRODUCAO =  "https://cardapio-ar-backend.onrender.com";
-        const apiHost = API_PRODUCAO;
+let ativo = null;          // card com o 3D ligado agora
+let viewerEmAR = null;     // enquanto != null, ninguém liga/desliga
+const preaquecidos = new Set();
 
-        // Injeta dinamicamente a query string se houver categoria ativa
-        const urlFinal = categoriaAtual ? `${apiHost}/api/cardapio?categoria=${categoriaAtual}` : `${apiHost}/api/cardapio`;
-
-        const response = await fetch(urlFinal);
-        const pratos = await response.json();
-
-        const container = document.getElementById('lista-cardapio');
-        container.innerHTML = '';
-
-        if (!Array.isArray(pratos)) {
-            console.error("A API não retornou uma lista válida de pratos.");
-            return;
-        }
-
-        pratos.forEach((prato, index) => {
-            try {
-                const id = prato.id || index;
-                const nome = prato.nome || 'Prato sem nome';
-                const descricao = prato.descricao || 'Sem descrição cadastrada.';
-
-                const precoNum = parseFloat(prato.preco);
-                const precoFormatado = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
-
-                const urlModelo = /*"https://modelviewer.dev/shared-assets/models/Astronaut.glb"*/prato.modelo_3d_url || prato.modelo3d || '';
-                const urlModelo3d_ios = prato.modelo3d_ios || '';
-                const urlFoto = prato.imagem_url || prato.foto || '';
-                const nomeEscapado = nome.replace(/'/g, "\\'");
-
-                const cardDiv = document.createElement('div');
-                cardDiv.className = 'card';
-                cardDiv.innerHTML = `
-                    <div class="viewport-ar">
-                    <model-viewer 
-                        src = "${urlModelo}"
-                        data-src-real="${urlModelo}" 
-                        data-ios-src-real="${urlModelo3d_ios}" 
-                        ar                         
-                        ar-scale="auto" 
-                        ar-modes="scene-viewer quick-look" 
-                        camera-controls 
-                        interaction-prompt="none" 
-                        loading="lazy"
-                        touch-action="pan-y"
-                        shadow-intensity="1"
-                        shadow-softness="1"
-                        exposure="1.2"
-                        alt="Modelo 3D de ${nome}">
-
-                        
-                        <button slot="ar-button" class="btn-ar">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Ver em 3D
-                        </button>
-                    </model-viewer> 
-                    </div>
-                    
-                    <div class="card-detalhes">
-                        <div class="card-header">
-                            <div>
-                                <h2>${nome}</h2>
-                                <p>${descricao}</p>
-                            </div>
-                            <span class="preco">R$ ${precoFormatado}</span>
-                        </div>
-                        
-                        <button class="btn-adicionar" onclick="adicionarAoPedido(${id}, '${nomeEscapado}', ${precoNum})">
-                            Adicionar ao Pedido
-                        </button>
-                    </div>
-                `;
-
-
-                container.appendChild(cardDiv);
-            } catch (erroItem) {
-                console.error("Erro ao renderizar item:", erroItem);
-            }
-
-        });
-        setTimeout(() => {
-            ativarGerenciadorDeMemoriaAR();
-        }, 150);
-    } catch (erro) {
-        console.error("Erro na conexão com o servidor:", erro);
-    }
+function ativar(card) {
+  if (viewerEmAR || ativo === card) return;
+  if (ativo) desativar(ativo);
+  const mv = card.querySelector('model-viewer');
+  if (card.dataset.usdz) mv.setAttribute('ios-src', card.dataset.usdz);
+  mv.setAttribute('src', card.dataset.glb);
+  card.classList.add('ativo');
+  ativo = card;
 }
-document.querySelectorAll('model-viewer').forEach(viewer => {
-    viewer.addEventListener('ar-status', (event) => {
-        console.log("Status AR:", event.detail.status);
-        if (event.detail.status === 'failed') {
-            alert("O AR falhou por este motivo: " + event.detail.failureReason);
-        }
+
+function desativar(card) {
+  const mv = card.querySelector('model-viewer');
+  mv.removeAttribute('src');
+  mv.removeAttribute('ios-src');
+  card.classList.remove('ativo');
+  if (ativo === card) ativo = null;
+}
+
+// Baixa o GLB uma vez para o cache HTTP do navegador
+function preaquecer(url) {
+  if (!url || preaquecidos.has(url)) return;
+  preaquecidos.add(url);
+  fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
+}
+
+// 1) Liga o 3D do card que cruza a faixa central da tela
+const observadorAtivo = new IntersectionObserver((entradas) => {
+  if (viewerEmAR) return;
+  entradas.forEach(({ target, isIntersecting }) => {
+    if (isIntersecting) ativar(target);
+    else if (ativo === target) desativar(target);
+  });
+}, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
+
+// 2) Pré-aquece os cards que estão chegando perto
+const observadorPreload = new IntersectionObserver((entradas) => {
+  entradas.forEach(({ target, isIntersecting }) => {
+    if (isIntersecting) preaquecer(target.dataset.glb);
+  });
+}, { rootMargin: '600px 0px', threshold: 0 });
+
+async function carregarCardapio() {
+  try {
+    const url = categoriaAtual
+      ? `${API_PRODUCAO}/api/cardapio?categoria=${encodeURIComponent(categoriaAtual)}`
+      : `${API_PRODUCAO}/api/cardapio`;
+
+    const pratos = await (await fetch(url)).json();
+    if (!Array.isArray(pratos)) return console.error('Resposta inválida da API');
+
+    const container = document.getElementById('lista-cardapio');
+    container.innerHTML = '';
+    if (ativo) ativo = null;
+
+    pratos.forEach((prato, i) => {
+      const id = prato.id ?? i;
+      const nome = prato.nome || 'Prato sem nome';
+      const precoNum = parseFloat(prato.preco);
+      const preco = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.glb = prato.modelo_3d_url || prato.modelo3d || '';
+      card.dataset.usdz = prato.modelo3d_ios
+        ? `${prato.modelo3d_ios}#allowsContentScaling=0` : '';
+
+      card.innerHTML = `
+        <div class="viewport-ar">
+          <img class="foto" loading="lazy" alt="">
+          <model-viewer
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            ar-placement="floor"
+            camera-controls
+            interaction-prompt="none"
+            touch-action="pan-y"
+            shadow-intensity="1"
+            exposure="1.2">
+            <button slot="ar-button" class="btn-ar">Ver em 3D</button>
+          </model-viewer>
+        </div>
+        <div class="card-detalhes">
+          <div class="card-header">
+            <div><h2></h2><p></p></div>
+            <span class="preco">R$ ${preco}</span>
+          </div>
+          <button class="btn-adicionar">Adicionar ao Pedido</button>
+        </div>`;
+
+      const img = card.querySelector('.foto');
+      img.src = prato.imagem_url || prato.foto || '';
+      img.alt = nome;
+      card.querySelector('model-viewer').setAttribute('alt', `Modelo 3D de ${nome}`);
+      card.querySelector('h2').textContent = nome;
+      card.querySelector('p').textContent = prato.descricao || 'Sem descrição cadastrada.';
+      card.querySelector('.btn-adicionar')
+          .addEventListener('click', () => adicionarAoPedido(id, nome, precoNum));
+
+      container.appendChild(card);
+      observadorAtivo.observe(card);
+      observadorPreload.observe(card);
     });
-});
 
-
+    // Congela a troca de modelos enquanto a sessão de AR estiver aberta
+    // (captura, porque o evento ar-status não sobe pelo DOM)
+    container.addEventListener('ar-status', (e) => {
+      const status = e.detail.status;
+      if (status === 'session-started') {
+        viewerEmAR = e.target;
+      } else if (status === 'not-presenting' || status === 'failed') {
+        viewerEmAR = null;
+      }
+    }, true);
+  } catch (e) {
+    console.error('Erro na conexão com o servidor:', e);
+  }
+}
 carregarCardapio();
 
-function ativarGerenciadorDeMemoriaAR() {
-    customElements.whenDefined('model-viewer').then(() => {
-        const MV = customElements.get('model-viewer');
-        if (MV) MV.modelCacheSize = 0;
-    });
-
-    const MAX_MODELOS_ATIVOS = 2; // teste 1 no celular se ainda pesar
-    let modelosAtivos = [];
-    let viewerEmAR = null; // enquanto != null, ninguém é carregado/descarregado
-
-    function carregar(mv) {
-        if (modelosAtivos.includes(mv)) return;
-        const glb = mv.dataset.srcReal;
-        const usdz = mv.dataset.iosSrcReal;
-        if (!glb) return;
-
-        // Abre vaga descarregando o mais antigo
-        while (modelosAtivos.length >= MAX_MODELOS_ATIVOS) {
-            descarregar(modelosAtivos[0]);
-        }
-
-        mv.setAttribute('src', glb);
-        if (usdz) mv.setAttribute('ios-src', `${usdz}#allowsContentScaling=0`);
-        modelosAtivos.push(mv);
-    }
-
-    function descarregar(mv) {
-        modelosAtivos = modelosAtivos.filter(m => m !== mv);
-        mv.removeAttribute('src');
-        mv.removeAttribute('ios-src');
-    }
-
-    const observador = new IntersectionObserver((entradas) => {
-        if (viewerEmAR) return; // congelado durante o AR
-        entradas.forEach(({ target, isIntersecting }) => {
-            if (isIntersecting) carregar(target);
-            else descarregar(target);
-        });
-    }, { rootMargin: '150px 0px', threshold: 0 });
-
-    function ressincronizar() {
-        // unobserve + observe força o observer a reavaliar o estado atual
-        document.querySelectorAll('model-viewer').forEach(mv => {
-            observador.unobserve(mv);
-            observador.observe(mv);
-        });
-    }
-
-    document.querySelectorAll('model-viewer').forEach(mv => {
-        // Trava já no clique, antes do evento do model-viewer chegar
-        mv.querySelector('.btn-ar')?.addEventListener('click', () => {
-            viewerEmAR = mv;
-        }, true);
-
-        mv.addEventListener('ar-status', (e) => {
-            const status = e.detail.status;
-            console.log('[AR]', status); // útil para depurar no chrome://inspect
-
-            if (status === 'session-started') {
-                viewerEmAR = mv;
-            } else if (status === 'not-presenting' || status === 'failed') {
-                if (viewerEmAR === mv) {
-                    viewerEmAR = null;
-                    ressincronizar();
-                }
-            }
-        });
-
-        observador.observe(mv);
-    });
+async function diagnosticoAR() {
+  const info = [];
+  info.push('secureContext: ' + window.isSecureContext);
+  info.push('navigator.xr: ' + !!navigator.xr);
+  if (navigator.xr) {
+    try {
+      info.push('immersive-ar: ' + await navigator.xr.isSessionSupported('immersive-ar'));
+    } catch (e) { info.push('erro: ' + e.message); }
+  }
+  info.push('UA: ' + navigator.userAgent);
+  const el = document.createElement('pre');
+  el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:11px;z-index:9999;margin:0;padding:6px;white-space:pre-wrap';
+  el.textContent = info.join('\n');
+  document.body.appendChild(el);
 }
-
+diagnosticoAR();

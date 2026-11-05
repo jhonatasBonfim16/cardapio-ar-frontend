@@ -361,6 +361,127 @@ model-viewer::part(default-ar-button) { display: none; }
     letter-spacing: 0.5px;
     transition: all 0.3s;
 }
+<<<<<<< HEAD
 .status-aberto  { background: rgba(4, 211, 97, 0.1);  color: #04d361; border: 1px solid rgba(4, 211, 97, 0.3);  box-shadow: 0 0 12px rgba(4, 211, 97, 0.15); }
 .status-breve   { background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); box-shadow: 0 0 12px rgba(255, 204, 0, 0.15); }
 .status-fechado { background: rgba(255, 71, 87, 0.1); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }
+=======
+
+/* Estado: Aberto (Verde) */
+.status-aberto {
+    background-color: rgba(4, 211, 97, 0.1);
+    color: #04d361;
+    border: 1px solid rgba(4, 211, 97, 0.3);
+    box-shadow: 0 0 12px rgba(4, 211, 97, 0.15);
+}
+
+/* Estado: Fecha em Breve (Amarelo) */
+.status-breve {
+    background-color: rgba(255, 204, 0, 0.1);
+    color: #ffcc00;
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    box-shadow: 0 0 12px rgba(255, 204, 0, 0.15);
+}
+
+/* Estado: Fechado (Cinza/Vermelho suave) */
+.status-fechado {
+    background-color: rgba(255, 71, 87, 0.1);
+    color: #ff4757;
+    border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+/* ALINHAMENTO MATEMÁTICO CENTRAL DO BOTÃO DE TEMA */
+#btn-tema {
+    position: relative !important;
+    display: inline-block !important;
+    width: 44px !important;  /* Ajuste para bater exatamente com o tamanho do seu botão de carrinho */
+    height: 44px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50%;     /* Garante que o fundo seja um círculo perfeito */
+    overflow: hidden;
+}
+
+/* Força os ícones do Sol e da Lua a ficarem cravados no centro exato do botão */
+#btn-tema svg {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important; /* Desloca o ícone de volta metade do seu próprio tamanho */
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 22px !important;  /* Garante o tamanho padrão do ícone */
+    height: 22px !important;
+}
+
+/* =========================================================================
+   CONSERTO DE VETOR E ANIMAÇÃO DE ENTRADA (SOL / LUA)
+   ========================================================================= */
+
+/* Alinhamento geral estável do botão */
+#btn-tema {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    overflow: hidden !important; /* Esconde o ícone antes de ele cair para dentro do botão */
+    width: 44px !important;
+    height: 44px !important;
+}
+
+/* Base de transição para os ícones */
+.icone-tema {
+    transition: all 0.3s ease;
+    transform-origin: center center;
+}
+
+/* Animação para a Lua surgir caindo do topo */
+#btn-tema #icone-lua {
+    animation: cairIcone 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Animação para o Sol surgir girando com brilho */
+#btn-tema #icone-sol {
+    animation: girarBrilho 0.4s ease-out forwards;
+}
+
+/* EFEITO 1: Caindo do Topo com efeito Elástico (Bounce) */
+@keyframes cairIcone {
+    0% {
+        transform: translateY(-40px) scale(0.5);
+        opacity: 0;
+    }
+    70% {
+        transform: translateY(4px) scale(1.05); /* Passa um pouquinho do centro */
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(0) scale(1); /* Trava no centro perfeito */
+    }
+}
+
+/* EFEITO 2: Giro de Transição para o Sol */
+@keyframes girarBrilho {
+    0% {
+        transform: rotate(-90deg) scale(0.2);
+        opacity: 0;
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+.viewport-ar { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
+.viewport-ar .foto,
+.viewport-ar model-viewer {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
+.viewport-ar .foto { object-fit: cover; }
+.viewport-ar model-viewer { opacity: 0; pointer-events: none; transition: opacity .25s; }
+
+.card.ativo model-viewer { opacity: 1; pointer-events: auto; }
+.card.ativo .foto { opacity: 0; }
+>>>>>>> dev

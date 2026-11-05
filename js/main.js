@@ -2,7 +2,6 @@
 let iconLixeira = document.getElementById("iconLixeira")
 let carrinho = [];
 let categoriaAtual = '';
-let listaAR = [];   // só pratos que têm modelo 3D
 
 const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
 

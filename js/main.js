@@ -243,10 +243,13 @@ function alternarCategoria(elemento, categoria) {
     carregarCardapio(); // Re-chama o fetch aplicando a rota filtrada no Postgres
 }
 
+// ================== ESTADO ==================
 let ativo = null;          // card com o 3D ligado agora
 let viewerEmAR = null;     // enquanto != null, ninguém liga/desliga
+let listaAR = [];          // pratos que têm modelo 3D
 const preaquecidos = new Set();
 
+// ================== ATIVAR / DESATIVAR 3D ==================
 function ativar(card) {
     if (viewerEmAR || ativo === card) return;
     if (ativo) desativar(ativo);
@@ -272,7 +275,8 @@ function preaquecer(url) {
     fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
 }
 
-// 1) Liga o 3D do card que cruza a faixa central da tela
+// ================== OBSERVADORES ==================
+// Liga o 3D do card que cruza a faixa central da tela
 const observadorAtivo = new IntersectionObserver((entradas) => {
     if (viewerEmAR) return;
     entradas.forEach(({ target, isIntersecting }) => {
@@ -281,16 +285,38 @@ const observadorAtivo = new IntersectionObserver((entradas) => {
     });
 }, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
 
-// 2) Pré-aquece os cards que estão chegando perto
+// Pré-aquece os cards que estão chegando perto
 const observadorPreload = new IntersectionObserver((entradas) => {
     entradas.forEach(({ target, isIntersecting }) => {
         if (isIntersecting) preaquecer(target.dataset.glb);
     });
 }, { rootMargin: '600px 0px', threshold: 0 });
 
+// ================== EVENTO ar-status (registrado UMA vez) ==================
+// Captura no document, porque o evento ar-status não sobe pelo DOM
+document.addEventListener('ar-status', (e) => {
+    const mv = e.target;
+    if (!mv || mv.tagName !== 'MODEL-VIEWER') return;
+    const status = e.detail.status;
 
+    if (status === 'session-started') {
+        viewerEmAR = mv;
+    } else if (status === 'not-presenting' || status === 'failed') {
+        if (viewerEmAR === mv) viewerEmAR = null;
 
+        // ao sair do AR, volta ao prato original do card
+        const i = Number(mv.dataset.indiceOriginal);
+        if (listaAR[i] && mv.dataset.indiceAr !== String(i)) {
+            mv.dataset.indiceAr = i;
+            const nomeEl = mv.closest('.card')?.querySelector('.ar-nome');
+            if (nomeEl) nomeEl.textContent = listaAR[i].nome;
+            if (listaAR[i].usdz) mv.setAttribute('ios-src', listaAR[i].usdz);
+            mv.src = listaAR[i].glb;
+        }
+    }
+}, true);
 
+// ================== CARREGAR CARDÁPIO ==================
 async function carregarCardapio() {
     try {
         const url = categoriaAtual
@@ -300,9 +326,22 @@ async function carregarCardapio() {
         const pratos = await (await fetch(url)).json();
         if (!Array.isArray(pratos)) return console.error('Resposta inválida da API');
 
+        // Lista usada pelas setas dentro do AR
+        listaAR = pratos
+            .map(p => ({
+                nome: p.nome || 'Prato sem nome',
+                glb: p.modelo_3d_url || p.modelo3d || '',
+                usdz: p.modelo3d_ios ? `${p.modelo3d_ios}#allowsContentScaling=0` : ''
+            }))
+            .filter(p => p.glb);
+
+        // Limpa o estado anterior (útil ao trocar de categoria)
+        observadorAtivo.disconnect();
+        observadorPreload.disconnect();
+        ativo = null;
+
         const container = document.getElementById('lista-cardapio');
         container.innerHTML = '';
-        if (ativo) ativo = null;
 
         pratos.forEach((prato, i) => {
             const id = prato.id ?? i;
@@ -329,18 +368,19 @@ async function carregarCardapio() {
             shadow-intensity="1"
             exposure="1.2">
             <button slot="ar-button" class="btn-ar">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg> Ver em 3D
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg> Ver em 3D
             </button>
-              <div class="ar-ui">
-                <div class="ar-titulo"><span class="ar-nome"></span></div>
-                <button class="ar-seta ar-esq" aria-label="Prato anterior">
+
+            <div class="ar-ui">
+              <div class="ar-titulo"><span class="ar-nome"></span></div>
+              <button class="ar-seta ar-esq" aria-label="Prato anterior">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <button class="ar-seta ar-dir" aria-label="Próximo prato">
+              </button>
+              <button class="ar-seta ar-dir" aria-label="Próximo prato">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
+              </button>
             </div>
           </model-viewer>
         </div>
@@ -352,59 +392,58 @@ async function carregarCardapio() {
           <button class="btn-adicionar">Adicionar ao Pedido</button>
         </div>`;
 
+            // textContent evita problemas de aspas/HTML
             const img = card.querySelector('.foto');
             img.src = prato.imagem_url || prato.foto || '';
             img.alt = nome;
-            card.querySelector('model-viewer').setAttribute('alt', `Modelo 3D de ${nome}`);
+
+            const mv = card.querySelector('model-viewer');
+            mv.setAttribute('alt', `Modelo 3D de ${nome}`);
             card.querySelector('h2').textContent = nome;
             card.querySelector('p').textContent = prato.descricao || 'Sem descrição cadastrada.';
+            card.querySelector('.ar-nome').textContent = nome;
             card.querySelector('.btn-adicionar')
                 .addEventListener('click', () => adicionarAoPedido(id, nome, precoNum));
 
-            container.appendChild(card);
-            observadorAtivo.observe(card);
-            observadorPreload.observe(card);
-
-            const mv = card.querySelector('model-viewer');
+            // Índice deste prato dentro da listaAR
             const indiceInicial = listaAR.findIndex(p => p.glb === card.dataset.glb);
             mv.dataset.indiceAr = indiceInicial;
             mv.dataset.indiceOriginal = indiceInicial;
-            card.querySelector('.ar-nome').textContent = nome;
 
+            // Troca de prato dentro do AR
             function trocarAR(delta) {
-                if (listaAR.length < 2) return;
                 const n = listaAR.length;
-                const novo = (Number(mv.dataset.indiceAr) + delta + n) % n;
+                if (n < 2) return;
+                const atual = Number(mv.dataset.indiceAr);
+                const novo = ((atual < 0 ? 0 : atual) + delta + n) % n;
                 const p = listaAR[novo];
+
                 mv.dataset.indiceAr = novo;
                 card.querySelector('.ar-nome').textContent = p.nome;
                 if (p.usdz) mv.setAttribute('ios-src', p.usdz);
                 mv.src = p.glb;
+
+                // pré-aquece o anterior e o próximo
+                preaquecer(listaAR[(novo + 1) % n].glb);
+                preaquecer(listaAR[(novo - 1 + n) % n].glb);
             }
 
+            // Impede que o toque nas setas também posicione o objeto no AR
             card.querySelectorAll('.ar-seta').forEach(btn => {
-                // impede que o toque no botão também seja lido como "posicionar objeto" no AR
                 btn.addEventListener('beforexrselect', e => e.preventDefault());
             });
             card.querySelector('.ar-esq').addEventListener('click', () => trocarAR(-1));
             card.querySelector('.ar-dir').addEventListener('click', () => trocarAR(1));
 
+            container.appendChild(card);
+            observadorAtivo.observe(card);
+            observadorPreload.observe(card);
         });
-
-        // Congela a troca de modelos enquanto a sessão de AR estiver aberta
-        // (captura, porque o evento ar-status não sobe pelo DOM)
-        container.addEventListener('ar-status', (e) => {
-            const status = e.detail.status;
-            if (status === 'session-started') {
-                viewerEmAR = e.target;
-            } else if (status === 'not-presenting' || status === 'failed') {
-                viewerEmAR = null;
-            }
-        }, true);
     } catch (e) {
         console.error('Erro na conexão com o servidor:', e);
     }
 }
+
 carregarCardapio();
 
 async function diagnosticoAR() {

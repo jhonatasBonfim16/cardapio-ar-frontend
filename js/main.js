@@ -2,6 +2,7 @@
 let iconLixeira = document.getElementById("iconLixeira")
 let carrinho = [];
 let categoriaAtual = '';
+let listaAR = [];   // só pratos que têm modelo 3D
 
 const API_PRODUCAO = "https://cardapio-ar-backend.onrender.com";
 
@@ -120,7 +121,7 @@ function alternarCamposPedido(tipo) {
 // FUNÇÃO DE HIGIENIZAÇÃO (Anti-XSS e remoção de código malicioso)
 function higienizarEntrada(texto) {
     if (!texto) return '';
-    
+
     return texto
         .replace(/<[^>]*>/g, '') // Remove qualquer tag HTML/Script completamente (ex: <script> virará vazio)
         .replace(/&/g, "&amp;")  // Escapa caracteres especiais de HTML
@@ -163,7 +164,7 @@ async function enviarPedidoFinal() {
         alert("🚀 Pedido enviado com sucesso para a cozinha da nossa mesa!");
     } else {
         textoMensagem += `🛵 *Entrega no Endereço:* ${inputVal}`;
-        
+
         const numeroWhats = "5527998399687";  // alterar depois
         // O encodeURIComponent continua aqui para garantir que a URL do WhatsApp formate os espaços corretamente
         window.open(`https://wa.me/${numeroWhats}?text=${encodeURIComponent(textoMensagem)}`, '_blank');
@@ -247,72 +248,75 @@ let viewerEmAR = null;     // enquanto != null, ninguém liga/desliga
 const preaquecidos = new Set();
 
 function ativar(card) {
-  if (viewerEmAR || ativo === card) return;
-  if (ativo) desativar(ativo);
-  const mv = card.querySelector('model-viewer');
-  if (card.dataset.usdz) mv.setAttribute('ios-src', card.dataset.usdz);
-  mv.setAttribute('src', card.dataset.glb);
-  card.classList.add('ativo');
-  ativo = card;
+    if (viewerEmAR || ativo === card) return;
+    if (ativo) desativar(ativo);
+    const mv = card.querySelector('model-viewer');
+    if (card.dataset.usdz) mv.setAttribute('ios-src', card.dataset.usdz);
+    mv.setAttribute('src', card.dataset.glb);
+    card.classList.add('ativo');
+    ativo = card;
 }
 
 function desativar(card) {
-  const mv = card.querySelector('model-viewer');
-  mv.removeAttribute('src');
-  mv.removeAttribute('ios-src');
-  card.classList.remove('ativo');
-  if (ativo === card) ativo = null;
+    const mv = card.querySelector('model-viewer');
+    mv.removeAttribute('src');
+    mv.removeAttribute('ios-src');
+    card.classList.remove('ativo');
+    if (ativo === card) ativo = null;
 }
 
 // Baixa o GLB uma vez para o cache HTTP do navegador
 function preaquecer(url) {
-  if (!url || preaquecidos.has(url)) return;
-  preaquecidos.add(url);
-  fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
+    if (!url || preaquecidos.has(url)) return;
+    preaquecidos.add(url);
+    fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
 }
 
 // 1) Liga o 3D do card que cruza a faixa central da tela
 const observadorAtivo = new IntersectionObserver((entradas) => {
-  if (viewerEmAR) return;
-  entradas.forEach(({ target, isIntersecting }) => {
-    if (isIntersecting) ativar(target);
-    else if (ativo === target) desativar(target);
-  });
+    if (viewerEmAR) return;
+    entradas.forEach(({ target, isIntersecting }) => {
+        if (isIntersecting) ativar(target);
+        else if (ativo === target) desativar(target);
+    });
 }, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
 
 // 2) Pré-aquece os cards que estão chegando perto
 const observadorPreload = new IntersectionObserver((entradas) => {
-  entradas.forEach(({ target, isIntersecting }) => {
-    if (isIntersecting) preaquecer(target.dataset.glb);
-  });
+    entradas.forEach(({ target, isIntersecting }) => {
+        if (isIntersecting) preaquecer(target.dataset.glb);
+    });
 }, { rootMargin: '600px 0px', threshold: 0 });
 
+
+
+
 async function carregarCardapio() {
-  try {
-    const url = categoriaAtual
-      ? `${API_PRODUCAO}/api/cardapio?categoria=${encodeURIComponent(categoriaAtual)}`
-      : `${API_PRODUCAO}/api/cardapio`;
+    try {
+        const url = categoriaAtual
+            ? `${API_PRODUCAO}/api/cardapio?categoria=${encodeURIComponent(categoriaAtual)}`
+            : `${API_PRODUCAO}/api/cardapio`;
 
-    const pratos = await (await fetch(url)).json();
-    if (!Array.isArray(pratos)) return console.error('Resposta inválida da API');
+        const pratos = await (await fetch(url)).json();
+        if (!Array.isArray(pratos)) return console.error('Resposta inválida da API');
 
-    const container = document.getElementById('lista-cardapio');
-    container.innerHTML = '';
-    if (ativo) ativo = null;
+        const container = document.getElementById('lista-cardapio');
+        container.innerHTML = '';
+        if (ativo) ativo = null;
 
-    pratos.forEach((prato, i) => {
-      const id = prato.id ?? i;
-      const nome = prato.nome || 'Prato sem nome';
-      const precoNum = parseFloat(prato.preco);
-      const preco = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
+        pratos.forEach((prato, i) => {
+            const id = prato.id ?? i;
+            const nome = prato.nome || 'Prato sem nome';
+            const precoNum = parseFloat(prato.preco);
+            const preco = !isNaN(precoNum) ? precoNum.toFixed(2).replace('.', ',') : '0,00';
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.glb = prato.modelo_3d_url || prato.modelo3d || '';
-      card.dataset.usdz = prato.modelo3d_ios
-        ? `${prato.modelo3d_ios}#allowsContentScaling=0` : '';
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.glb = prato.modelo_3d_url || prato.modelo3d || '';
+            card.dataset.usdz = prato.modelo3d_ios
+                ? `${prato.modelo3d_ios}#allowsContentScaling=0` : '';
 
-      card.innerHTML = `
+            card.innerHTML = `
         <div class="viewport-ar">
           <img class="foto" loading="lazy" alt="">
           <model-viewer
@@ -324,7 +328,20 @@ async function carregarCardapio() {
             touch-action="pan-y"
             shadow-intensity="1"
             exposure="1.2">
-            <button slot="ar-button" class="btn-ar">Ver em 3D</button>
+            <button slot="ar-button" class="btn-ar">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18a2.25 2.25 0 01-2.25 2.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg> Ver em 3D
+            </button>
+              <div class="ar-ui">
+                <div class="ar-titulo"><span class="ar-nome"></span></div>
+                <button class="ar-seta ar-esq" aria-label="Prato anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <button class="ar-seta ar-dir" aria-label="Próximo prato">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
           </model-viewer>
         </div>
         <div class="card-detalhes">
@@ -335,49 +352,67 @@ async function carregarCardapio() {
           <button class="btn-adicionar">Adicionar ao Pedido</button>
         </div>`;
 
-      const img = card.querySelector('.foto');
-      img.src = prato.imagem_url || prato.foto || '';
-      img.alt = nome;
-      card.querySelector('model-viewer').setAttribute('alt', `Modelo 3D de ${nome}`);
-      card.querySelector('h2').textContent = nome;
-      card.querySelector('p').textContent = prato.descricao || 'Sem descrição cadastrada.';
-      card.querySelector('.btn-adicionar')
-          .addEventListener('click', () => adicionarAoPedido(id, nome, precoNum));
+            const img = card.querySelector('.foto');
+            img.src = prato.imagem_url || prato.foto || '';
+            img.alt = nome;
+            card.querySelector('model-viewer').setAttribute('alt', `Modelo 3D de ${nome}`);
+            card.querySelector('h2').textContent = nome;
+            card.querySelector('p').textContent = prato.descricao || 'Sem descrição cadastrada.';
+            card.querySelector('.btn-adicionar')
+                .addEventListener('click', () => adicionarAoPedido(id, nome, precoNum));
 
-      container.appendChild(card);
-      observadorAtivo.observe(card);
-      observadorPreload.observe(card);
-    });
+            container.appendChild(card);
+            observadorAtivo.observe(card);
+            observadorPreload.observe(card);
 
-    // Congela a troca de modelos enquanto a sessão de AR estiver aberta
-    // (captura, porque o evento ar-status não sobe pelo DOM)
-    container.addEventListener('ar-status', (e) => {
-      const status = e.detail.status;
-      if (status === 'session-started') {
-        viewerEmAR = e.target;
-      } else if (status === 'not-presenting' || status === 'failed') {
-        viewerEmAR = null;
-      }
-    }, true);
-  } catch (e) {
-    console.error('Erro na conexão com o servidor:', e);
-  }
+            const mv = card.querySelector('model-viewer');
+            const indiceInicial = listaAR.findIndex(p => p.glb === card.dataset.glb);
+            mv.dataset.indiceAr = indiceInicial;
+            mv.dataset.indiceOriginal = indiceInicial;
+            card.querySelector('.ar-nome').textContent = nome;
+
+            function trocarAR(delta) {
+                if (listaAR.length < 2) return;
+                const n = listaAR.length;
+                const novo = (Number(mv.dataset.indiceAr) + delta + n) % n;
+                const p = listaAR[novo];
+                mv.dataset.indiceAr = novo;
+                card.querySelector('.ar-nome').textContent = p.nome;
+                if (p.usdz) mv.setAttribute('ios-src', p.usdz);
+                mv.src = p.glb;
+            }
+
+            card.querySelectorAll('.ar-seta').forEach(btn => {
+                // impede que o toque no botão também seja lido como "posicionar objeto" no AR
+                btn.addEventListener('beforexrselect', e => e.preventDefault());
+            });
+            card.querySelector('.ar-esq').addEventListener('click', () => trocarAR(-1));
+            card.querySelector('.ar-dir').addEventListener('click', () => trocarAR(1));
+
+        });
+
+        // Congela a troca de modelos enquanto a sessão de AR estiver aberta
+        // (captura, porque o evento ar-status não sobe pelo DOM)
+http://192.168.100.77:3000
+    } catch (e) {
+        console.error('Erro na conexão com o servidor:', e);
+    }
 }
 carregarCardapio();
 
 async function diagnosticoAR() {
-  const info = [];
-  info.push('secureContext: ' + window.isSecureContext);
-  info.push('navigator.xr: ' + !!navigator.xr);
-  if (navigator.xr) {
-    try {
-      info.push('immersive-ar: ' + await navigator.xr.isSessionSupported('immersive-ar'));
-    } catch (e) { info.push('erro: ' + e.message); }
-  }
-  info.push('UA: ' + navigator.userAgent);
-  const el = document.createElement('pre');
-  el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:11px;z-index:9999;margin:0;padding:6px;white-space:pre-wrap';
-  el.textContent = info.join('\n');
-  document.body.appendChild(el);
+    const info = [];
+    info.push('secureContext: ' + window.isSecureContext);
+    info.push('navigator.xr: ' + !!navigator.xr);
+    if (navigator.xr) {
+        try {
+            info.push('immersive-ar: ' + await navigator.xr.isSessionSupported('immersive-ar'));
+        } catch (e) { info.push('erro: ' + e.message); }
+    }
+    info.push('UA: ' + navigator.userAgent);
+    const el = document.createElement('pre');
+    el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:11px;z-index:9999;margin:0;padding:6px;white-space:pre-wrap';
+    el.textContent = info.join('\n');
+    document.body.appendChild(el);
 }
 diagnosticoAR();

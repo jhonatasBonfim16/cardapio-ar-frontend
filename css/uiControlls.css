@@ -1,0 +1,50 @@
+/* Escondido fora do AR */
+.ar-ui { display: none; }
+model-viewer[ar-status="session-started"] .ar-ui,
+model-viewer[ar-status="object-placed"] .ar-ui { display: block; }
+
+.ar-titulo {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 10px 22px;
+  border-radius: 999px;
+  color: #fff;
+  font: 600 17px/1.2 -apple-system, "SF Pro Text", system-ui, sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+}
+
+.ar-seta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  opacity: 0.75;
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  transition: opacity .15s, transform .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ar-seta svg { width: 24px; height: 24px; }
+.ar-seta:active { opacity: 1; transform: translateY(-50%) scale(.92); }
+.ar-esq { left: 12px; }
+.ar-dir { right: 12px; }

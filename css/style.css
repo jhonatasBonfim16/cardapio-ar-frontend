@@ -361,11 +361,6 @@ model-viewer::part(default-ar-button) { display: none; }
     letter-spacing: 0.5px;
     transition: all 0.3s;
 }
-<<<<<<< HEAD
-.status-aberto  { background: rgba(4, 211, 97, 0.1);  color: #04d361; border: 1px solid rgba(4, 211, 97, 0.3);  box-shadow: 0 0 12px rgba(4, 211, 97, 0.15); }
-.status-breve   { background: rgba(255, 204, 0, 0.1); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.3); box-shadow: 0 0 12px rgba(255, 204, 0, 0.15); }
-.status-fechado { background: rgba(255, 71, 87, 0.1); color: #ff4757; border: 1px solid rgba(255, 71, 87, 0.3); }
-=======
 
 /* Estado: Aberto (Verde) */
 .status-aberto {
@@ -484,4 +479,3 @@ model-viewer::part(default-ar-button) { display: none; }
 
 .card.ativo model-viewer { opacity: 1; pointer-events: auto; }
 .card.ativo .foto { opacity: 0; }
->>>>>>> dev

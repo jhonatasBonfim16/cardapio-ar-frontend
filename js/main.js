@@ -445,6 +445,7 @@ async function carregarCardapio() {
 
 carregarCardapio();
 
+/*
 async function diagnosticoAR() {
     const info = [];
     info.push('secureContext: ' + window.isSecureContext);
@@ -461,3 +462,4 @@ async function diagnosticoAR() {
     document.body.appendChild(el);
 }
 diagnosticoAR();
+*/

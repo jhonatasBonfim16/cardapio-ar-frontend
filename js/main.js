@@ -267,10 +267,20 @@ function desativar(card) {
     if (ativo === card) ativo = null;
 }
 
-// Baixa o GLB uma vez para o cache HTTP do navegador
+// Baixa o GLB uma vez para o cache HTTP do navegador e usa preload de alta prioridade
 function preaquecer(url) {
     if (!url || preaquecidos.has(url)) return;
     preaquecidos.add(url);
+
+    // Adiciona link preload no head para o navegador baixar em background com prioridade
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'fetch';
+    link.crossOrigin = 'anonymous';
+    link.href = url;
+    document.head.appendChild(link);
+
+    // Mantém o fetch com force-cache como redundância de garantia
     fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
 }
 
@@ -292,7 +302,6 @@ const observadorPreload = new IntersectionObserver((entradas) => {
 }, { rootMargin: '600px 0px', threshold: 0 });
 
 // ================== EVENTO ar-status (registrado UMA vez) ==================
-// Captura no document, porque o evento ar-status não sobe pelo DOM
 document.addEventListener('ar-status', (e) => {
     const mv = e.target;
     if (!mv || mv.tagName !== 'MODEL-VIEWER') return;
@@ -439,6 +448,11 @@ async function carregarCardapio() {
             observadorAtivo.observe(card);
             observadorPreload.observe(card);
         });
+
+        // Opcional: Pré-aquece automaticamente os 2 primeiros itens logo que o cardápio abre
+        if (listaAR.length > 0) preaquecer(listaAR[0].glb);
+        if (listaAR.length > 1) preaquecer(listaAR[1].glb);
+
     } catch (e) {
         console.error('Erro na conexão com o servidor:', e);
     }

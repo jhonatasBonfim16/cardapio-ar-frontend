@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/carrinho.css">
     <link rel="stylesheet" href="./css/uiControlls.css">
+    <link rel="stylesheet" href="./css/popupEstilo.css">
 
     <title>Cardápio Digital AR</title>
 
@@ -15,6 +16,23 @@
 </head>
 
 <body>
+    <!-- Modal / Pop-up de Aviso de Carregamento Inicial -->
+    <div id="modal-aviso-ar" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icone-container">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round5"
+                        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+            </div>
+            <h2>Experiência em Realidade Aumentada</h2>
+            <p>Olá! Como esta é a sua primeira visita ou os modelos 3D estão sendo carregados, os itens podem demorar
+                alguns segundos extras na primeira visualização.</p>
+            <p class="modal-sub">Depois disso, tudo ficará salvo em cache para rodar liso e instantâneo!</p>
+            <button id="btn-fechar-modal" class="btn-entendi">Entendi, vamos lá!</button>
+        </div>
+    </div>
 
     <!-- BARRA TOPO FIXA COMPLETA -->
     <div class="topo-fixo">
@@ -29,15 +47,17 @@
                 <!-- NOVO: Botão Alternador de Tema (Claro / Escuro) -->
                 <button class="carrinho-topo" id="btn-tema" onclick="alternarTemaManual()" aria-label="Alternar tema">
                     <!-- Ícone do Sol (Com classe de animação) -->
-                    <svg id="icone-sol" class="icone-tema" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px; display: none;">
+                    <svg id="icone-sol" class="icone-tema" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                        style="width: 24px; height: 24px; display: none;">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M12 3v2.25m0 13.5V21M4.22 4.22l1.59 1.59m12.38 12.38l1.59 1.59M3 12h2.25m13.5 0H21M4.22 19.78l1.59-1.59M17.42 6.58l1.59-1.59M12 6.75a5.25 5.25 0 1 0 0 10.5 5.25 5.25 0 0 0 0-10.5Z" />
                     </svg>
                     <!-- Ícone da Lua (Vetor Fechado e Corrigido com classe de animação) -->
-                    <svg id="icone-lua" class="icone-tema" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.97-2.432 2.252-2.752a12 12 0 1011.25 11.752z" />
+                    <svg id="icone-lua" class="icone-tema" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px;">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.97-2.432 2.252-2.752a12 12 0 1011.25 11.752z" />
                     </svg>
                 </button>
 
@@ -266,18 +286,19 @@
 
     <!-- Vinculação do Script JavaScript Externo -->
     <script src="./js/main.js"></script>
+    <script src="./js/popup.js"></script>
     <script src="./js/cadastro.js"></script>
     <script src="./js/statusFuncionamento.js"></script>
     <script src="./js/tema.js"></script>
     <script src="./js/pagamento.js"></script>
     <script>
-  if (location.search.includes('debug=1')) {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/eruda@3.4.1';
-    s.onload = () => eruda.init();
-    document.body.appendChild(s);
-  }
-</script>
+        if (location.search.includes('debug=1')) {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/eruda@3.4.1';
+            s.onload = () => eruda.init();
+            document.body.appendChild(s);
+        }
+    </script>
 </body>
 
 </html>

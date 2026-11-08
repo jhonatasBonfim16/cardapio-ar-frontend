@@ -372,6 +372,7 @@ async function carregarCardapio() {
             ar-placement="floor"
             camera-controls
             interaction-prompt="none"
+            ar-scale="fixed"
             touch-action="pan-y"
             shadow-intensity="1"
             exposure="1.2"

@@ -240,6 +240,10 @@ const preaquecidos = new Set();
 const cachePratos = {};    // resposta da API por categoria (chave '' = todas)
 let reqId = 0;             // descarta respostas antigas se trocar de categoria rápido
 
+// iPhone, iPod e iPad (o iPadOS se apresenta como Mac, por isso o teste de toque)
+const EH_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 // ================== ATIVAR / DESATIVAR 3D ==================
 function ativar(card) {
     if (viewerEmAR || ativo === card) return;
@@ -365,7 +369,7 @@ async function carregarCardapio() {
             .map(p => ({
                 nome: p.nome || 'Prato sem nome',
                 glb: p.modelo_3d_url || p.modelo3d || '',
-                usdz: p.modelo3d_ios ? `${p.modelo3d_ios}#allowsContentScaling=0` : ''
+                usdz: EH_IOS && p.modelo3d_ios ? `${p.modelo3d_ios}#allowsContentScaling=0` : ''
             }))
             .filter(p => p.glb);
 
@@ -386,7 +390,7 @@ async function carregarCardapio() {
             const card = document.createElement('div');
             card.className = 'card';
             card.dataset.glb = prato.modelo_3d_url || prato.modelo3d || '';
-            card.dataset.usdz = prato.modelo3d_ios
+            card.dataset.usdz = EH_IOS && prato.modelo3d_ios
                 ? `${prato.modelo3d_ios}#allowsContentScaling=0` : '';
 
             card.innerHTML = `

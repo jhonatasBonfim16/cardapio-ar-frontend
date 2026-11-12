@@ -232,21 +232,13 @@ async function enviarPedidoFinal() {
 }
 
 
-// LÓGICA DE FILTRAGEM REATIVA POR CATEGORIAS
-function alternarCategoria(elemento, categoria) {
-    // Altera a classe visual ativa no menu horizontal
-    document.querySelectorAll('.categoria-item').forEach(aba => aba.classList.remove('ativo'));
-    elemento.classList.add('ativo');
-
-    categoriaAtual = categoria;
-    carregarCardapio(); // Re-chama o fetch aplicando a rota filtrada no Postgres
-}
-
 // ================== ESTADO ==================
 let ativo = null;          // card com o 3D ligado agora
 let viewerEmAR = null;     // enquanto != null, ninguém liga/desliga
 let listaAR = [];          // pratos que têm modelo 3D
 const preaquecidos = new Set();
+const cachePratos = {};    // resposta da API por categoria (chave '' = todas)
+let reqId = 0;             // descarta respostas antigas se trocar de categoria rápido
 
 // ================== ATIVAR / DESATIVAR 3D ==================
 function ativar(card) {
@@ -267,21 +259,45 @@ function desativar(card) {
     if (ativo === card) ativo = null;
 }
 
-// Baixa o GLB uma vez para o cache HTTP do navegador e usa preload de alta prioridade
+// ================== TROCA DE PRATO (compartilhada) ==================
+// Aplica um prato da listaAR a um viewer. Usada pelas setas e pela saída do AR.
+function mostrarPrato(mv, indice, { aplicarSrc = true } = {}) {
+    const p = listaAR[indice];
+    if (!p) return;
+
+    mv.dataset.indiceAr = indice;
+
+    const nomeEl = mv.closest('.card')?.querySelector('.ar-nome');
+    if (nomeEl) nomeEl.textContent = p.nome;
+
+    if (!aplicarSrc) return; // só atualiza índice e nome
+
+    if (p.usdz) mv.setAttribute('ios-src', p.usdz);
+    else mv.removeAttribute('ios-src');
+    mv.setAttribute('src', p.glb);
+}
+
+// Baixa o GLB uma única vez via preload (prioridade baixa, para não
+// competir com o modelo do card que o usuário está vendo).
+// Se o model-viewer pedir a mesma URL durante o download, o navegador reaproveita.
 function preaquecer(url) {
     if (!url || preaquecidos.has(url)) return;
     preaquecidos.add(url);
 
-    // Adiciona link preload no head para o navegador baixar em background com prioridade
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'fetch';
     link.crossOrigin = 'anonymous';
+    link.fetchPriority = 'low';
     link.href = url;
-    document.head.appendChild(link);
 
-    // Mantém o fetch com force-cache como redundância de garantia
-    fetch(url, { cache: 'force-cache' }).catch(() => preaquecidos.delete(url));
+    // se falhar, remove a tag e libera a URL para tentar de novo depois
+    link.onerror = () => {
+        link.remove();
+        preaquecidos.delete(url);
+    };
+
+    document.head.appendChild(link);
 }
 
 // ================== OBSERVADORES ==================
@@ -315,24 +331,34 @@ document.addEventListener('ar-status', (e) => {
         // ao sair do AR, volta ao prato original do card
         const i = Number(mv.dataset.indiceOriginal);
         if (listaAR[i] && mv.dataset.indiceAr !== String(i)) {
-            mv.dataset.indiceAr = i;
-            const nomeEl = mv.closest('.card')?.querySelector('.ar-nome');
-            if (nomeEl) nomeEl.textContent = listaAR[i].nome;
-            if (listaAR[i].usdz) mv.setAttribute('ios-src', listaAR[i].usdz);
-            mv.src = listaAR[i].glb;
+            const card = mv.closest('.card');
+            // só recarrega o modelo se esse card for o que está ligado;
+            // se não for, o ativar() já usa o GLB original do dataset
+            mostrarPrato(mv, i, { aplicarSrc: card === ativo });
         }
     }
 }, true);
 
 // ================== CARREGAR CARDÁPIO ==================
 async function carregarCardapio() {
+    const meu = ++reqId;
     try {
-        const url = categoriaAtual
-            ? `${API_PRODUCAO}/api/cardapio?categoria=${encodeURIComponent(categoriaAtual)}`
-            : `${API_PRODUCAO}/api/cardapio`;
+        const chave = categoriaAtual || '';
+        let pratos = cachePratos[chave];
 
-        const pratos = await (await fetch(url)).json();
-        if (!Array.isArray(pratos)) return console.error('Resposta inválida da API');
+        // só vai à API na primeira vez que a categoria é aberta
+        if (!pratos) {
+            const url = categoriaAtual
+                ? `${API_PRODUCAO}/api/cardapio?categoria=${encodeURIComponent(categoriaAtual)}`
+                : `${API_PRODUCAO}/api/cardapio`;
+
+            const resposta = await (await fetch(url)).json();
+            if (meu !== reqId) return; // o usuário já trocou de categoria
+            if (!Array.isArray(resposta)) return console.error('Resposta inválida da API');
+
+            cachePratos[chave] = resposta;
+            pratos = resposta;
+        }
 
         // Lista usada pelas setas dentro do AR
         listaAR = pratos
@@ -424,16 +450,13 @@ async function carregarCardapio() {
             function trocarAR(delta) {
                 const n = listaAR.length;
                 if (n < 2) return;
+
                 const atual = Number(mv.dataset.indiceAr);
                 const novo = ((atual < 0 ? 0 : atual) + delta + n) % n;
-                const p = listaAR[novo];
 
-                mv.dataset.indiceAr = novo;
-                card.querySelector('.ar-nome').textContent = p.nome;
-                if (p.usdz) mv.setAttribute('ios-src', p.usdz);
-                mv.src = p.glb;
+                mostrarPrato(mv, novo);
 
-                // pré-aquece o anterior e o próximo
+                // pré-aquece o próximo e o anterior
                 preaquecer(listaAR[(novo + 1) % n].glb);
                 preaquecer(listaAR[(novo - 1 + n) % n].glb);
             }
@@ -446,8 +469,16 @@ async function carregarCardapio() {
             card.querySelector('.ar-dir').addEventListener('click', () => trocarAR(1));
 
             container.appendChild(card);
-            observadorAtivo.observe(card);
-            observadorPreload.observe(card);
+
+            if (card.dataset.glb) {
+                observadorAtivo.observe(card);
+                observadorPreload.observe(card);
+            } else {
+                // prato sem modelo 3D: fica só com a foto, sem botão de AR
+                mv.removeAttribute('ar');
+                card.querySelector('.btn-ar').hidden = true;
+                card.querySelector('.ar-ui').hidden = true;
+            }
         });
 
         // Opcional: Pré-aquece automaticamente os 2 primeiros itens logo que o cardápio abre
@@ -457,6 +488,16 @@ async function carregarCardapio() {
     } catch (e) {
         console.error('Erro na conexão com o servidor:', e);
     }
+}
+
+// ================== ALTERNAR CATEGORIA ==================
+function alternarCategoria(elemento, categoria) {
+    // Altera a classe visual ativa no menu horizontal
+    document.querySelectorAll('.categoria-item').forEach(aba => aba.classList.remove('ativo'));
+    elemento.classList.add('ativo');
+
+    categoriaAtual = categoria;
+    carregarCardapio(); // usa o cache e só vai à API na 1ª vez de cada categoria
 }
 
 carregarCardapio();

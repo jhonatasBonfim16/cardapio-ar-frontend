@@ -233,6 +233,7 @@ async function enviarPedidoFinal() {
 
 
 // ================== ESTADO ==================
+// ================== ESTADO ==================
 let ativo = null;          // card com o 3D ligado agora
 let viewerEmAR = null;     // enquanto != null, ninguém liga/desliga
 let listaAR = [];          // pratos que têm modelo 3D
@@ -305,14 +306,51 @@ function preaquecer(url) {
 }
 
 // ================== OBSERVADORES ==================
-// Liga o 3D do card que cruza a faixa central da tela
-const observadorAtivo = new IntersectionObserver((entradas) => {
+// Cards que estão dentro da faixa central da tela neste momento
+const naFaixa = new Set();
+
+// Entre os cards na faixa, liga o 3D do mais próximo do centro da tela.
+// Se não houver nenhum na faixa, desliga o que estava ligado.
+function escolherAtivo() {
     if (viewerEmAR) return;
-    entradas.forEach(({ target, isIntersecting }) => {
-        if (isIntersecting) ativar(target);
-        else if (ativo === target) desativar(target);
+
+    const centro = window.innerHeight / 2;
+    let melhor = null;
+    let menorDistancia = Infinity;
+
+    naFaixa.forEach(card => {
+        const r = card.getBoundingClientRect();
+        const distancia = Math.abs((r.top + r.bottom) / 2 - centro);
+        if (distancia < menorDistancia) {
+            menorDistancia = distancia;
+            melhor = card;
+        }
     });
-}, { rootMargin: '-35% 0px -35% 0px', threshold: 0 });
+
+    if (melhor) ativar(melhor);
+    else if (ativo) desativar(ativo);
+}
+
+const observadorAtivo = new IntersectionObserver((entradas) => {
+    entradas.forEach(({ target, isIntersecting }) => {
+        if (isIntersecting) naFaixa.add(target);
+        else naFaixa.delete(target);
+    });
+    escolherAtivo();
+}, { rootMargin: '-25% 0px -25% 0px', threshold: 0 }); // faixa = 50% do meio da tela
+
+// Com a faixa mais larga, dois cards ficam nela ao mesmo tempo. Reavaliar durante
+// a rolagem faz o 3D seguir sempre o card mais próximo do centro, mesmo quando o
+// observador não dispara.
+let rafPendente = false;
+window.addEventListener('scroll', () => {
+    if (rafPendente) return;
+    rafPendente = true;
+    requestAnimationFrame(() => {
+        rafPendente = false;
+        escolherAtivo();
+    });
+}, { passive: true });
 
 // Pré-aquece os cards que estão chegando perto
 const observadorPreload = new IntersectionObserver((entradas) => {
@@ -340,6 +378,9 @@ document.addEventListener('ar-status', (e) => {
             // se não for, o ativar() já usa o GLB original do dataset
             mostrarPrato(mv, i, { aplicarSrc: card === ativo });
         }
+
+        // reavalia qual card deve ficar com o 3D ligado depois do AR
+        escolherAtivo();
     }
 }, true);
 
@@ -376,6 +417,7 @@ async function carregarCardapio() {
         // Limpa o estado anterior (útil ao trocar de categoria)
         observadorAtivo.disconnect();
         observadorPreload.disconnect();
+        naFaixa.clear();
         ativo = null;
 
         const container = document.getElementById('lista-cardapio');
@@ -505,7 +547,6 @@ function alternarCategoria(elemento, categoria) {
 }
 
 carregarCardapio();
-
 /*
 async function diagnosticoAR() {
     const info = [];
